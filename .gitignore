@@ -42,3 +42,8 @@ auth.json
 # Optional: OS / editor junk
 .DS_Store
 Thumbs.db
+
+# Logs
+error_log
+public/error_log
+*.log
