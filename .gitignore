@@ -28,3 +28,17 @@ Homestead.json
 .env.production
 .phpactor.json
 auth.json
+# Ignore zip archives
+*.zip
+
+# Laravel / common ignores
+/vendor/
+/node_modules/
+/storage/*.key
+/storage/logs/*
+/storage/framework/*
+/.env
+
+# Optional: OS / editor junk
+.DS_Store
+Thumbs.db
