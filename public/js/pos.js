@@ -1594,18 +1594,36 @@ function get_recent_transactions(status, element_obj) {
     });
 }
 
+function focus_pos_product_input(selector) {
+    var focusSelector = selector || 'input#search_product';
+    var input = $(focusSelector);
+
+    if (input.length && !input.prop('disabled')) {
+        input.focus().select();
+    }
+}
+
 //variation_id is null when weighing_scale_barcode is used.
-function pos_product_row(variation_id = null, purchase_line_id = null, weighing_scale_barcode = null, quantity = 1) {
+function pos_product_row(variation_id = null, purchase_line_id = null, weighing_scale_barcode = null, quantity = 1, options = {}) {
 
     //Get item addition method
     var item_addtn_method = 0;
     var add_via_ajax = true;
+    var quantity_to_add = parseFloat(quantity) || 1;
+    var should_prefer_existing_row = !!options.forceIncrementExisting;
+    var suppress_error_toast = !!options.suppressErrorToast;
+    var operation_success = false;
+    var report_result = function(result) {
+        if (typeof options.onResult === 'function') {
+            options.onResult(result);
+        }
+    };
 
     if (variation_id != null && $('#item_addition_method').length) {
         item_addtn_method = $('#item_addition_method').val();
     }
 
-    if (item_addtn_method == 0) {
+    if (item_addtn_method == 0 && !should_prefer_existing_row) {
         add_via_ajax = true;
     } else {
         var is_added = false;
@@ -1637,14 +1655,19 @@ function pos_product_row(variation_id = null, purchase_line_id = null, weighing_
                     //Increment product quantity
                     qty_element = $(this).find('.pos_quantity');
                     var qty = __read_number(qty_element);
-                    __write_number(qty_element, qty + 1);
+                    __write_number(qty_element, qty + quantity_to_add);
                     qty_element.change();
+                    operation_success = true;
+                    report_result({
+                        success: true,
+                        action: 'incremented',
+                        variation_id: variation_id,
+                        quantity: quantity_to_add,
+                    });
 
                     round_row_to_iraqi_dinnar($(this));
 
-                    $('input#search_product')
-                        .focus()
-                        .select();
+                    focus_pos_product_input(options.focusSelector);
                 }
         });
     }
@@ -1703,7 +1726,7 @@ function pos_product_row(variation_id = null, purchase_line_id = null, weighing_
                 price_group: price_group,
                 purchase_line_id: purchase_line_id,
                 weighing_scale_barcode: weighing_scale_barcode,
-                quantity: quantity,
+                quantity: quantity_to_add,
                 is_sales_order: is_sales_order,
                 disable_qty_alert: disable_qty_alert,
                 is_draft: is_draft
@@ -1711,6 +1734,13 @@ function pos_product_row(variation_id = null, purchase_line_id = null, weighing_
             dataType: 'json',
             success: function(result) {
                 if (result.success) {
+                    operation_success = true;
+                    report_result({
+                        success: true,
+                        action: 'added',
+                        variation_id: variation_id,
+                        quantity: quantity_to_add,
+                    });
                     $('table#pos_table tbody')
                         .append(result.html_content)
                         .find('input.pos_quantity');
@@ -1742,9 +1772,7 @@ function pos_product_row(variation_id = null, purchase_line_id = null, weighing_
                     round_row_to_iraqi_dinnar(this_row);
                     __currency_convert_recursively(this_row);
 
-                    $('input#search_product')
-                        .focus()
-                        .select();
+                    focus_pos_product_input(options.focusSelector);
 
                     //Used in restaurant module
                     if (result.html_modifier) {
@@ -1758,14 +1786,24 @@ function pos_product_row(variation_id = null, purchase_line_id = null, weighing_
                     //scroll bottom of items list
                     $(".pos_product_div").animate({ scrollTop: $('.pos_product_div').prop("scrollHeight")}, 1000);
                 } else {
-                    toastr.error(result.msg);
-                    $('input#search_product')
-                        .focus()
-                        .select();
+                    operation_success = false;
+                    report_result({
+                        success: false,
+                        action: 'failed',
+                        variation_id: variation_id,
+                        quantity: quantity_to_add,
+                        msg: result.msg,
+                    });
+                    if (!suppress_error_toast) {
+                        toastr.error(result.msg);
+                    }
+                    focus_pos_product_input(options.focusSelector);
                 }
             },
         });
     }
+
+    return operation_success;
 }
 
 //Update values for each row
@@ -2163,8 +2201,12 @@ function set_location() {
         $('input#search_product')
             .prop('disabled', false)
             .focus();
+        $('input#scan_product_code').prop('disabled', false);
+        $('#open_camera_scan_modal').prop('disabled', false);
     } else {
         $('input#search_product').prop('disabled', true);
+        $('input#scan_product_code').prop('disabled', true).val('');
+        $('#open_camera_scan_modal').prop('disabled', true);
     }
 
     initialize_printer();

@@ -1,6 +1,53 @@
 //This file contains all functions used products tab
 
 $(document).ready(function() {
+    var productCodePreviewTimer;
+
+    function renderProductCodePreview(previewSelector, imageSrc, emptyMessage, altText) {
+        var html = '<small class="text-muted">' + emptyMessage + '</small>';
+        if (imageSrc) {
+            html = '<img src="' + imageSrc + '" alt="' + altText + '" style="max-width: 100%;">';
+        }
+
+        $(previewSelector).html(html);
+    }
+
+    function refreshProductCodePreview(action) {
+        if (!$('#barcode').length && !$('#qr_code_value').length) {
+            return;
+        }
+
+        $.ajax({
+            method: 'POST',
+            url: '/products/generate-codes',
+            dataType: 'json',
+            data: {
+                _token: $('input[name="_token"]').first().val(),
+                action: action || 'preview',
+                product_id: $('#product_id').val() || '',
+                sku: $('#sku').val(),
+                barcode: $('#barcode').val(),
+                qr_code_value: $('#qr_code_value').val(),
+                barcode_type: $('#barcode_type').val(),
+            },
+            success: function(response) {
+                if (!response.success) {
+                    return;
+                }
+
+                if (action === 'barcode' || action === 'sku') {
+                    $('#sku').val(response.sku);
+                    $('#barcode').val(response.barcode || '');
+                } else if (action === 'qr') {
+                    $('#qr_code_value').val(response.qr_code_value || '');
+                }
+
+                renderProductCodePreview('.js-product-barcode-preview', response.barcode_preview, 'No barcode yet', 'Barcode preview');
+                renderProductCodePreview('.js-product-qr-preview', response.qr_preview, 'No QR yet', 'QR preview');
+            },
+        });
+    }
+
     $(document).on('ifChecked', 'input#enable_stock', function() {
         $('div#alert_quantity_div').show();
         $('div#quick_product_opening_stock_div').show();
@@ -247,6 +294,18 @@ $(document).ready(function() {
             }
         }
         
+    });
+
+    $(document).on('click', '.js-generate-product-code', function(e) {
+        e.preventDefault();
+        refreshProductCodePreview($(this).data('action'));
+    });
+
+    $(document).on('input change', '#sku, #barcode, #qr_code_value, #barcode_type', function() {
+        clearTimeout(productCodePreviewTimer);
+        productCodePreviewTimer = setTimeout(function() {
+            refreshProductCodePreview('preview');
+        }, 250);
     });
     //End for product type single
 
@@ -497,6 +556,10 @@ $(document).ready(function() {
             }
         });
     });
+
+    if ($('#barcode').length || $('#qr_code_value').length) {
+        refreshProductCodePreview('preview');
+    }
 
     //If tax rate is changed
     $(document).on('change', 'select#tax', function() {

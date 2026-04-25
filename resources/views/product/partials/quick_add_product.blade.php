@@ -31,6 +31,19 @@
           </div>
         </div>
         <div class="clearfix"></div>
+        <div class="col-sm-4">
+          <div class="form-group">
+            {!! Form::label('barcode', 'Barcode:') !!}
+            {!! Form::text('barcode', null, ['class' => 'form-control', 'placeholder' => 'Optional manual barcode']); !!}
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="form-group">
+            {!! Form::label('qr_code_value', 'QR code value:') !!}
+            {!! Form::text('qr_code_value', null, ['class' => 'form-control', 'placeholder' => 'Optional manual QR value']); !!}
+          </div>
+        </div>
+        <div class="clearfix"></div>
 
         <div class="col-sm-4">
           <div class="form-group">

@@ -43,7 +43,60 @@
             <div class="col-sm-4">
               <div class="form-group">
                 {!! Form::label('barcode_type', __('product.barcode_type') . ':*') !!}
-                  {!! Form::select('barcode_type', $barcode_types, $product->barcode_type, ['placeholder' => __('messages.please_select'), 'class' => 'form-control select2', 'required']); !!}
+                  {!! Form::select('barcode_type', $barcode_types, $product->barcode_type, ['placeholder' => __('messages.please_select'), 'class' => 'form-control select2', 'required', 'id' => 'barcode_type']); !!}
+              </div>
+            </div>
+
+            <div class="clearfix"></div>
+            <div class="col-sm-4">
+              <div class="form-group">
+                {!! Form::label('barcode', 'Barcode:') !!}
+                <div class="input-group">
+                  {!! Form::text('barcode', $product->barcode, ['class' => 'form-control', 'id' => 'barcode', 'placeholder' => 'Scan or enter barcode']); !!}
+                  <span class="input-group-btn">
+                    <button type="button" class="btn btn-default js-generate-product-code" data-action="barcode">Generate</button>
+                  </span>
+                </div>
+                <small class="help-block">Manual override stays saved as entered.</small>
+              </div>
+            </div>
+            <div class="col-sm-4">
+              <div class="form-group">
+                {!! Form::label('qr_code_value', 'QR code value:') !!}
+                <div class="input-group">
+                  {!! Form::text('qr_code_value', $product->qr_code_value, ['class' => 'form-control', 'id' => 'qr_code_value', 'placeholder' => 'Scan or enter QR value']); !!}
+                  <span class="input-group-btn">
+                    <button type="button" class="btn btn-default js-generate-product-code" data-action="qr">Generate</button>
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-4">
+              <div class="row">
+                <div class="col-xs-6">
+                  <div class="well well-sm text-center">
+                    <strong>Barcode preview</strong>
+                    <div class="js-product-barcode-preview" style="margin-top: 10px;">
+                      @if(!empty($product->barcode))
+                        <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($product->barcode, $product->barcode_type ?: 'C128', 2, 60, [17, 24, 39], true) }}" alt="Barcode" style="max-width: 100%;">
+                      @else
+                        <small class="text-muted">No barcode yet</small>
+                      @endif
+                    </div>
+                  </div>
+                </div>
+                <div class="col-xs-6">
+                  <div class="well well-sm text-center">
+                    <strong>QR preview</strong>
+                    <div class="js-product-qr-preview" style="margin-top: 10px;">
+                      @if(!empty($product->qr_code_value))
+                        <img src="data:image/png;base64,{{ DNS2D::getBarcodePNG($product->qr_code_value, 'QRCODE', 6, 6, [17, 24, 39]) }}" alt="QR code" style="max-width: 100%;">
+                      @else
+                        <small class="text-muted">No QR yet</small>
+                      @endif
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 

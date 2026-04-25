@@ -96,6 +96,8 @@
 
     @include('sale_pos.partials.weighing_scale_modal')
 
+    @include('sale_pos.partials.camera_scan_modal')
+
 @stop
 @section('css')
     <!-- include module css -->
@@ -108,7 +110,9 @@
     @endif
 @stop
 @section('javascript')
+    <script src="{{ asset('js/html5-qrcode.min.js?v=' . $asset_v) }}"></script>
     <script src="{{ asset('js/pos.js?v=' . $asset_v) }}"></script>
+    <script src="{{ asset('js/pos_scanner.js?v=' . $asset_v) }}"></script>
     <script src="{{ asset('js/printer.js?v=' . $asset_v) }}"></script>
     <script src="{{ asset('js/product.js?v=' . $asset_v) }}"></script>
     <script src="{{ asset('js/opening_stock.js?v=' . $asset_v) }}"></script>

@@ -10,6 +10,10 @@
 	      			<div class="col-sm-4 invoice-col">
 	      				<b>@lang('product.sku'):</b>
 						{{$product->sku }}<br>
+						<b>Barcode:</b>
+						{{$product->barcode ?? '--' }}<br>
+						<b>QR value:</b>
+						{{$product->qr_code_value ?? '--' }}<br>
 						<b>@lang('product.brand'): </b>
 						{{$product->brand->name ?? '--' }}<br>
 						<b>@lang('product.unit'): </b>

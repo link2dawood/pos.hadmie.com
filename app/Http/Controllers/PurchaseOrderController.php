@@ -11,6 +11,7 @@ use App\PurchaseLine;
 use App\TaxRate;
 use App\Transaction;
 use App\User;
+use App\Support\Prints\PurchaseOrderPrintRenderer;
 use App\Utils\BusinessUtil;
 use App\Utils\ModuleUtil;
 use App\Utils\ProductUtil;
@@ -31,18 +32,21 @@ class PurchaseOrderController extends Controller
 
     protected $moduleUtil;
 
+    protected $purchaseOrderPrintRenderer;
+
     /**
      * Constructor
      *
      * @param  ProductUtils  $product
      * @return void
      */
-    public function __construct(ProductUtil $productUtil, TransactionUtil $transactionUtil, BusinessUtil $businessUtil, ModuleUtil $moduleUtil)
+    public function __construct(ProductUtil $productUtil, TransactionUtil $transactionUtil, BusinessUtil $businessUtil, ModuleUtil $moduleUtil, PurchaseOrderPrintRenderer $purchaseOrderPrintRenderer)
     {
         $this->productUtil = $productUtil;
         $this->transactionUtil = $transactionUtil;
         $this->businessUtil = $businessUtil;
         $this->moduleUtil = $moduleUtil;
+        $this->purchaseOrderPrintRenderer = $purchaseOrderPrintRenderer;
 
         $this->purchaseOrderStatuses = [
             'ordered' => [
@@ -802,18 +806,18 @@ class PurchaseOrderController extends Controller
 
         $business_id = request()->session()->get('user.business_id');
 
-        $taxes = TaxRate::where('business_id', $business_id)
-                                ->get();
-
         $purchase = Transaction::where('business_id', $business_id)
                     ->where('id', $id)
                     ->with(
+                        'business',
                         'contact',
                         'purchase_lines',
                         'purchase_lines.product',
+                        'purchase_lines.product.unit',
                         'purchase_lines.product.brand',
                         'purchase_lines.product.category',
                         'purchase_lines.variations',
+                        'purchase_lines.sub_unit',
                         'purchase_lines.variations.product_variation',
                         'location',
                         'payment_lines'
@@ -832,33 +836,25 @@ class PurchaseOrderController extends Controller
         $location_details = BusinessLocation::find($purchase->location_id);
         $invoice_layout = $this->businessUtil->invoiceLayout($business_id, $location_details->invoice_layout_id);
 
-        //Logo
-        $logo = $invoice_layout->show_logo != 0 && ! empty($invoice_layout->logo) && file_exists(public_path('uploads/invoice_logos/'.$invoice_layout->logo)) ? asset('uploads/invoice_logos/'.$invoice_layout->logo) : false;
+        $rendered = $this->purchaseOrderPrintRenderer->render($purchase, $invoice_layout, true);
+        $body = $rendered['html'];
 
-        $word_format = $invoice_layout->common_settings['num_to_word_format'] ? $invoice_layout->common_settings['num_to_word_format'] : 'international';
-        $total_in_words = $this->transactionUtil->numToWord($purchase->final_total, null, $word_format);
-
-        $custom_labels = json_decode(session('business.custom_labels'), true);
-
-        $last_purchase = Transaction::where('purchase_order_ids', 'like', '%"'.$purchase->id.'"%')->orderBy('transaction_date', 'desc')->first();
-        //Generate pdf
-        $body = view('purchase_order.receipts.download_pdf')
-                    ->with(compact('purchase', 'invoice_layout', 'location_details', 'logo', 'total_in_words', 'custom_labels', 'taxes', 'last_purchase'))
-                    ->render();
-
-        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('uploads/temp'),
+        $mpdf = new \Mpdf\Mpdf([
+            'tempDir' => public_path('uploads/temp'),
             'mode' => 'utf-8',
             'autoScriptToLang' => true,
             'autoLangToFont' => true,
             'autoVietnamese' => true,
             'autoArabic' => true,
-            'margin_top' => 8,
-            'margin_bottom' => 8,
-            'format' => 'A4',
+            'margin_top' => $rendered['document']['paper_profile']['pdf_margin_top'],
+            'margin_bottom' => $rendered['document']['paper_profile']['pdf_margin_bottom'],
+            'margin_left' => $rendered['document']['paper_profile']['pdf_margin_left'],
+            'margin_right' => $rendered['document']['paper_profile']['pdf_margin_right'],
+            'format' => $rendered['document']['paper_profile']['pdf_format'],
         ]);
 
         $mpdf->useSubstitutions = true;
-        $mpdf->SetWatermarkText($purchase->business->name, 0.1);
+        $mpdf->SetWatermarkText($purchase->business->name ?? ($purchase->location->name ?? 'Purchase Order'), 0.1);
         $mpdf->showWatermarkText = true;
         $mpdf->SetTitle('PO-'.$purchase->ref_no.'.pdf');
         $mpdf->WriteHTML($body);

@@ -9,6 +9,24 @@
 </style>
 @php
   $custom_labels = json_decode(session('business.custom_labels'), true);
+  $print_settings = [];
+  $print_section_order = 'brand_header,company,party,document_meta,items,totals,notes,terms,signatures,codes,footer';
+  $print_documents = [
+    'invoice' => 'Invoice',
+    'delivery_note' => 'Delivery note',
+    'packing_slip' => 'Packing slip',
+    'quotation' => 'Quotation',
+    'sale_order' => 'Sale order',
+    'purchase_order' => 'Purchase order',
+  ];
+  $document_toggles = [
+    'prices' => 'Prices',
+    'tax' => 'Tax',
+    'totals' => 'Totals',
+    'notes' => 'Notes',
+    'signatures' => 'Signature',
+    'recipient_shipping' => 'Recipient / shipping',
+  ];
 @endphp
 <!-- Content Header (Page header) -->
 <section class="content-header">
@@ -30,10 +48,10 @@
         </div>
         <div class="col-sm-6">
           <div class="form-group">
-            {!! Form::label('design', __('lang_v1.design') . ':*') !!}
+            {!! Form::label('design', 'Legacy compatibility layout:*') !!}
               {!! Form::select('design', $designs, 'classic', ['class' => 'form-control']); !!}
               <span class="help-block">
-                @lang('lang_v1.used_for_browser_based_printing')
+                Keeps older receipt mappings working. New structured print settings below are now the primary controls.
               </span>
           </div>
 
@@ -62,6 +80,107 @@
             </div>
           </div>
 
+        </div>
+        <div class="clearfix"></div>
+        <div class="col-sm-12">
+          <div class="box box-default">
+            <div class="box-header with-border">
+              <h4 class="box-title">Print Template Selection</h4>
+            </div>
+            <div class="box-body">
+              <div class="row">
+                <div class="col-sm-4">
+                  <div class="form-group">
+                    {!! Form::label('print_paper_size', 'Receipt paper size:') !!}
+                    {!! Form::select('common_settings[print][paper_size]', [
+                      'auto' => 'Auto / use legacy mapping',
+                      'a4' => 'Standard document (A4)',
+                      'thermal-80' => 'Thermal receipt (80mm)',
+                      'thermal-58' => 'Thermal receipt (58mm)',
+                    ], $print_settings['paper_size'] ?? 'auto', ['class' => 'form-control', 'id' => 'print_paper_size']); !!}
+                  </div>
+                </div>
+                <div class="col-sm-4">
+                  <div class="form-group">
+                    {!! Form::label('standard_template', 'Standard print template:') !!}
+                    {!! Form::select('common_settings[print][standard_template]', [
+                      'ledger' => 'Ledger',
+                    ], $print_settings['standard_template'] ?? 'ledger', ['class' => 'form-control', 'id' => 'standard_template']); !!}
+                  </div>
+                </div>
+                <div class="col-sm-4">
+                  <div class="form-group">
+                    {!! Form::label('thermal_template', 'Thermal receipt template:') !!}
+                    {!! Form::select('common_settings[print][thermal_template]', [
+                      'clean' => 'Clean',
+                      'compact' => 'Compact',
+                    ], $print_settings['thermal_template'] ?? 'clean', ['class' => 'form-control', 'id' => 'thermal_template']); !!}
+                  </div>
+                </div>
+                <div class="col-sm-12">
+                  <div class="form-group">
+                    {!! Form::label('section_order', 'Section order:') !!}
+                    {!! Form::text('common_settings[print][section_order]', $print_settings['section_order'] ?? $print_section_order, ['class' => 'form-control', 'id' => 'section_order', 'placeholder' => $print_section_order]); !!}
+                    <span class="help-block">Comma-separated section keys for future-proof ordering.</span>
+                  </div>
+                </div>
+                <div class="col-sm-12">
+                  <h5>Optional Sections</h5>
+                </div>
+                @foreach(['notes' => 'Notes block', 'terms' => 'Terms block', 'signatures' => 'Signature block', 'codes' => 'QR / barcode block', 'footer' => 'Footer block'] as $section_key => $section_label)
+                  <div class="col-sm-4">
+                    <div class="checkbox">
+                      <label>
+                        {!! Form::checkbox('common_settings[print][sections]['.$section_key.']', 1, data_get($print_settings, 'sections.'.$section_key, true), ['class' => 'input-icheck print-section-toggle']); !!} {{ $section_label }}
+                      </label>
+                    </div>
+                  </div>
+                @endforeach
+                <div class="col-sm-12">
+                  <h5>Standard document visibility</h5>
+                  <div class="table-responsive">
+                    <table class="table table-bordered table-condensed">
+                      <thead>
+                        <tr>
+                          <th>Document</th>
+                          @foreach($document_toggles as $toggle_label)
+                            <th>{{ $toggle_label }}</th>
+                          @endforeach
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @foreach($print_documents as $document_key => $document_label)
+                          <tr>
+                            <td>{{ $document_label }}</td>
+                            @foreach($document_toggles as $toggle_key => $toggle_label)
+                              <td class="text-center">
+                                {!! Form::hidden('common_settings[print][documents]['.$document_key.']['.$toggle_key.']', 0) !!}
+                                {!! Form::checkbox(
+                                  'common_settings[print][documents]['.$document_key.']['.$toggle_key.']',
+                                  1,
+                                  (bool) data_get($print_settings, 'documents.'.$document_key.'.'.$toggle_key, in_array($document_key, ['invoice', 'quotation', 'sale_order', 'purchase_order'], true) || ($toggle_key === 'recipient_shipping' && in_array($document_key, ['delivery_note', 'packing_slip'], true)) || ($toggle_key === 'signatures' && $document_key === 'delivery_note')),
+                                  ['class' => 'input-icheck print-document-toggle', 'data-document' => $document_label]
+                                ) !!}
+                              </td>
+                            @endforeach
+                          </tr>
+                        @endforeach
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div class="col-sm-12">
+                  <div class="well well-sm" id="print_settings_preview">
+                    <strong>Preview summary:</strong>
+                    <span data-preview="paper">Auto / use legacy mapping</span> |
+                    <span data-preview="template">Ledger / Clean</span> |
+                    <span data-preview="sections">Sections: notes, terms, signatures, QR / barcode, footer</span> |
+                    <span data-preview="documents">A4 docs: invoice, quotation, sale order, purchase order</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="clearfix"></div>
             <div class="col-sm-6">
@@ -1138,6 +1257,28 @@
 @section('javascript')
 <script type="text/javascript">
   __page_leave_confirmation('#add_invoice_layout_form');
+    function updatePrintSettingsPreview() {
+        var paperText = $('#print_paper_size option:selected').text();
+        var templateText = $('#standard_template option:selected').text() + ' / ' + $('#thermal_template option:selected').text();
+        var enabledSections = [];
+        var enabledDocuments = [];
+
+        $('.print-section-toggle:checked').each(function () {
+            enabledSections.push($(this).closest('label').text().trim());
+        });
+        $('.print-document-toggle').each(function () {
+            if ($(this).is(':checked') && $(this).attr('name').indexOf('[prices]') !== -1) {
+                enabledDocuments.push($(this).data('document'));
+            }
+        });
+
+        $('[data-preview="paper"]').text(paperText);
+        $('[data-preview="template"]').text(templateText);
+        $('[data-preview="sections"]').text('Sections: ' + (enabledSections.length ? enabledSections.join(', ') : 'none'));
+        $('[data-preview="documents"]').text('A4 docs with prices: ' + (enabledDocuments.length ? enabledDocuments.join(', ') : 'none'));
+    }
+
+    $(document).on('change ifChanged', '#print_paper_size, #standard_template, #thermal_template, .print-section-toggle, .print-document-toggle', updatePrintSettingsPreview);
     $(document).on('ifChanged', '#show_letter_head', function() {
         letter_head_changed();
     });
@@ -1151,5 +1292,9 @@
             $('.letter_head_input').addClass('hide');
         }
     }
+
+    $(document).ready(function(){
+        updatePrintSettingsPreview();
+    });
 </script>
 @endsection

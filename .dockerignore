@@ -1,0 +1,13 @@
+.git
+.github
+vendor
+node_modules
+storage/logs
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/debugbar
+bootstrap/cache/*.php
+graphify-out
+readme.pdf
+error_log

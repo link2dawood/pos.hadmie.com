@@ -45,6 +45,18 @@
 				</span>
 			</div>
 		</div>
+		<div class="form-group">
+			<div class="input-group">
+				<span class="input-group-addon">
+					<i class="fa fa-barcode"></i>
+				</span>
+				{!! Form::text('scan_product_code', null, ['class' => 'form-control', 'id' => 'scan_product_code', 'placeholder' => 'Scan barcode / QR to add instantly', 'autocomplete' => 'off']); !!}
+				<span class="input-group-btn">
+					<button type="button" class="btn btn-default bg-white btn-flat" id="open_camera_scan_modal" data-toggle="modal" data-target="#pos_camera_scan_modal" title="Scan with camera"><i class="fa fa-camera text-primary fa-lg"></i></button>
+				</span>
+			</div>
+			<small class="help-block">Keep this field focused for hardware scanners. Repeated scans auto-increment the line quantity.</small>
+		</div>
 	</div>
 </div>
 <div class="row">

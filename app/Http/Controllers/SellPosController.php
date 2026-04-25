@@ -45,6 +45,7 @@ use App\TransactionPayment;
 use App\TransactionSellLine;
 use App\TypesOfService;
 use App\User;
+use App\Support\Prints\PosPrintRenderer;
 use App\Utils\BusinessUtil;
 use App\Utils\CashRegisterUtil;
 use App\Utils\ContactUtil;
@@ -83,6 +84,8 @@ class SellPosController extends Controller
 
     protected $notificationUtil;
 
+    protected $posPrintRenderer;
+
     /**
      * Constructor
      *
@@ -96,7 +99,8 @@ class SellPosController extends Controller
         TransactionUtil $transactionUtil,
         CashRegisterUtil $cashRegisterUtil,
         ModuleUtil $moduleUtil,
-        NotificationUtil $notificationUtil
+        NotificationUtil $notificationUtil,
+        PosPrintRenderer $posPrintRenderer
     ) {
         $this->contactUtil = $contactUtil;
         $this->productUtil = $productUtil;
@@ -105,6 +109,7 @@ class SellPosController extends Controller
         $this->cashRegisterUtil = $cashRegisterUtil;
         $this->moduleUtil = $moduleUtil;
         $this->notificationUtil = $notificationUtil;
+        $this->posPrintRenderer = $posPrintRenderer;
 
         $this->dummyPaymentLine = [
             'method' => 'cash',
@@ -772,29 +777,17 @@ class SellPosController extends Controller
             'decimal_separator' => $business_details->decimal_separator,
         ];
         $receipt_details->currency = $currency_details;
-
-        if ($is_package_slip) {
-            $output['html_content'] = view('sale_pos.receipts.packing_slip', compact('receipt_details'))->render();
-
-            return $output;
-        }
-
-        if ($is_delivery_note) {
-            $output['html_content'] = view('sale_pos.receipts.delivery_note', compact('receipt_details'))->render();
-
-            return $output;
-        }
+        $documentType = $this->resolvePosDocumentType($is_package_slip, $is_delivery_note);
 
         $output['print_title'] = $receipt_details->invoice_no;
         //If print type browser - return the content, printer - return printer config data, and invoice format config
-        if ($receipt_printer_type == 'printer') {
+        if ($receipt_printer_type == 'printer' && $documentType === 'invoice') {
             $output['print_type'] = 'printer';
             $output['printer_config'] = $this->businessUtil->printerConfig($business_id, $location_details->printer_id);
             $output['data'] = $receipt_details;
         } else {
-            $layout = !empty($receipt_details->design) ? 'sale_pos.receipts.' . $receipt_details->design : 'sale_pos.receipts.classic';
-
-            $output['html_content'] = view($layout, compact('receipt_details'))->render();
+            $rendered = $this->posPrintRenderer->render($receipt_details, $invoice_layout, $documentType);
+            $output['html_content'] = $rendered['html'];
         }
 
         return $output;
@@ -1860,6 +1853,32 @@ class SellPosController extends Controller
         return $output;
     }
 
+    public function scanLookup(Request $request)
+    {
+        $request->validate([
+            'code' => 'required|string|max:255',
+            'location_id' => 'required',
+        ]);
+
+        $business_id = $request->session()->get('user.business_id');
+        $raw_code = trim((string) $request->input('code'));
+
+        $resolved = $this->resolveScannedCode($business_id, $raw_code);
+
+        if (! $resolved['success']) {
+            return $resolved;
+        }
+
+        return [
+            'success' => true,
+            'variation_id' => $resolved['variation_id'],
+            'quantity' => $resolved['quantity'] ?? 1,
+            'match_type' => $resolved['match_type'],
+            'product_name' => $resolved['product_name'] ?? null,
+            'msg' => $resolved['msg'] ?? __('lang_v1.product_added_to_cart'),
+        ];
+    }
+
     /**
      * Returns the HTML row for a payment in POS
      *
@@ -2765,6 +2784,195 @@ class SellPosController extends Controller
         ];
     }
 
+    private function resolveScannedCode(int $business_id, string $rawCode): array
+    {
+        if ($rawCode === '') {
+            return [
+                'success' => false,
+                'msg' => __('messages.something_went_wrong'),
+            ];
+        }
+
+        $normalizedCode = $this->normalizeScannedLookupValue($rawCode);
+
+        $barcodeProduct = Product::where('business_id', $business_id)
+            ->active()
+            ->productForSales()
+            ->with(['variations' => function ($query) {
+                $query->whereNull('deleted_at')
+                    ->with(['product_variation']);
+            }])
+            ->whereNotNull('barcode')
+            ->whereRaw("UPPER(REPLACE(barcode, ' ', '')) = ?", [$normalizedCode])
+            ->get();
+
+        if ($barcodeProduct->count() > 1) {
+            return [
+                'success' => false,
+                'msg' => 'This barcode is assigned to multiple products. Please clean up duplicate barcode values first.',
+            ];
+        }
+
+        if ($barcodeProduct->count() === 1) {
+            return $this->resolveProductScanMatch($barcodeProduct->first(), 'barcode');
+        }
+
+        $qrProduct = Product::where('business_id', $business_id)
+            ->active()
+            ->productForSales()
+            ->with(['variations' => function ($query) {
+                $query->whereNull('deleted_at')
+                    ->with(['product_variation']);
+            }])
+            ->whereNotNull('qr_code_value')
+            ->whereRaw('TRIM(qr_code_value) = ?', [$rawCode])
+            ->get();
+
+        if ($qrProduct->count() > 1) {
+            return [
+                'success' => false,
+                'msg' => 'This QR value is assigned to multiple products. Please clean up duplicate QR values first.',
+            ];
+        }
+
+        if ($qrProduct->count() === 1) {
+            return $this->resolveProductScanMatch($qrProduct->first(), 'qr');
+        }
+
+        $variation = Variation::join('products', 'variations.product_id', '=', 'products.id')
+            ->leftJoin('product_variations as pv', 'variations.product_variation_id', '=', 'pv.id')
+            ->where('products.business_id', $business_id)
+            ->where('products.is_inactive', 0)
+            ->where('products.not_for_selling', 0)
+            ->whereNull('variations.deleted_at')
+            ->where(function ($query) use ($normalizedCode) {
+                $query->whereRaw("UPPER(REPLACE(variations.sub_sku, ' ', '')) = ?", [$normalizedCode])
+                    ->orWhereRaw("UPPER(REPLACE(products.sku, ' ', '')) = ?", [$normalizedCode]);
+            })
+            ->select(
+                'variations.id',
+                'variations.name as variation_name',
+                'variations.sub_sku',
+                'products.name as product_name',
+                'products.type as product_type',
+                'pv.name as product_variation_name'
+            )
+            ->first();
+
+        if (! empty($variation)) {
+            return [
+                'success' => true,
+                'variation_id' => $variation->id,
+                'quantity' => 1,
+                'match_type' => 'sku',
+                'product_name' => $this->formatVariationLabel(
+                    $variation->product_name,
+                    $variation->product_type,
+                    $variation->product_variation_name,
+                    $variation->variation_name
+                ),
+                'msg' => 'Scan matched by SKU and added to the cart.',
+            ];
+        }
+
+        if ($this->canAttemptWeighingBarcode($rawCode)) {
+            $parsedWeighing = $this->__parseWeighingBarcode($rawCode);
+            if (! empty($parsedWeighing['success'])) {
+                $variationDetail = Variation::with(['product', 'product_variation'])->find($parsedWeighing['variation_id']);
+
+                return [
+                    'success' => true,
+                    'variation_id' => $parsedWeighing['variation_id'],
+                    'quantity' => $parsedWeighing['qty'],
+                    'match_type' => 'weighing_scale',
+                    'product_name' => ! empty($variationDetail)
+                        ? $this->formatVariationLabel(
+                            $variationDetail->product->name ?? '',
+                            $variationDetail->product->type ?? '',
+                            $variationDetail->product_variation->name ?? '',
+                            $variationDetail->name ?? ''
+                        )
+                        : null,
+                    'msg' => 'Weighing-scale label matched and added to the cart.',
+                ];
+            }
+
+            return [
+                'success' => false,
+                'msg' => $parsedWeighing['msg'] ?? 'The weighing barcode could not be decoded.',
+            ];
+        }
+
+        return [
+            'success' => false,
+            'msg' => 'No product matched that barcode or QR code.',
+        ];
+    }
+
+    private function resolveProductScanMatch(Product $product, string $matchType): array
+    {
+        $variations = $product->variations
+            ->filter(function ($variation) {
+                return empty($variation->deleted_at);
+            })
+            ->values();
+
+        if ($variations->count() !== 1) {
+            return [
+                'success' => false,
+                'msg' => 'This code matches a product with multiple variations. Scan the variation SKU instead.',
+            ];
+        }
+
+        $variation = $variations->first();
+
+        return [
+            'success' => true,
+            'variation_id' => $variation->id,
+            'quantity' => 1,
+            'match_type' => $matchType,
+            'product_name' => $this->formatVariationLabel(
+                $product->name,
+                $product->type,
+                $variation->product_variation->name ?? '',
+                $variation->name
+            ),
+            'msg' => $matchType === 'qr'
+                ? 'QR code matched and added to the cart.'
+                : 'Barcode matched and added to the cart.',
+        ];
+    }
+
+    private function normalizeScannedLookupValue(string $value): string
+    {
+        return Str::upper(preg_replace('/\s+/', '', trim($value)));
+    }
+
+    private function canAttemptWeighingBarcode(string $rawCode): bool
+    {
+        $scale_setting = session()->get('business.weighing_scale_setting');
+        if (empty($scale_setting) || empty($scale_setting['product_sku_length'])) {
+            return false;
+        }
+
+        $prefix = $scale_setting['label_prefix'] ?? '';
+
+        return $prefix === '' || Str::startsWith($rawCode, $prefix);
+    }
+
+    private function formatVariationLabel(string $productName, ?string $productType, ?string $productVariationName, ?string $variationName): string
+    {
+        if ($productType === 'variable') {
+            return trim($productName.' - '.$productVariationName.' - '.$variationName);
+        }
+
+        if (! empty($variationName) && $variationName !== 'DUMMY') {
+            return trim($productName.' - '.$variationName);
+        }
+
+        return $productName;
+    }
+
     public function getFeaturedProducts($id)
     {
         $location = BusinessLocation::findOrFail($id);
@@ -3052,29 +3260,37 @@ class SellPosController extends Controller
         $receipt_contents = $this->transactionUtil->getPdfContentsForGivenTransaction($business_id, $id);
         $receipt_details = $receipt_contents['receipt_details'];
         $location_details = $receipt_contents['location_details'];
-        $is_email_attachment = false;
 
-        $blade_file = 'download_pdf';
         if (!empty($receipt_details->is_export)) {
-            $blade_file = 'download_export_pdf';
+            $body = view('sale_pos.receipts.download_export_pdf')
+                ->with(compact('receipt_details', 'location_details'))
+                ->render();
+
+            $mpdf = new \Mpdf\Mpdf([
+                'tempDir' => public_path('uploads/temp'),
+                'mode' => 'utf-8',
+                'autoScriptToLang' => true,
+                'autoLangToFont' => true,
+                'autoVietnamese' => true,
+                'autoArabic' => true,
+                'margin_top' => 8,
+                'margin_bottom' => 8,
+                'format' => 'A4',
+            ]);
+
+            $mpdf->useSubstitutions = true;
+            $mpdf->SetWatermarkText($receipt_details->business_name, 0.1);
+            $mpdf->showWatermarkText = true;
+            $mpdf->SetTitle('INVOICE-' . $receipt_details->invoice_no . '.pdf');
+            $mpdf->WriteHTML($body);
+            return $mpdf->Output('INVOICE-' . $receipt_details->invoice_no . '.pdf', 'I');
         }
 
-        //Generate pdf
-        $body = view('sale_pos.receipts.' . $blade_file)
-            ->with(compact('receipt_details', 'location_details', 'is_email_attachment'))
-            ->render();
+        $invoice_layout = $this->businessUtil->invoiceLayout($business_id, $location_details->invoice_layout_id);
+        $rendered = $this->posPrintRenderer->render($receipt_details, $invoice_layout, 'invoice', true);
+        $body = $rendered['html'];
 
-        $mpdf = new \Mpdf\Mpdf([
-            'tempDir' => public_path('uploads/temp'),
-            'mode' => 'utf-8',
-            'autoScriptToLang' => true,
-            'autoLangToFont' => true,
-            'autoVietnamese' => true,
-            'autoArabic' => true,
-            'margin_top' => 8,
-            'margin_bottom' => 8,
-            'format' => 'A4',
-        ]);
+        $mpdf = new \Mpdf\Mpdf($this->pdfConfigForPaperProfile($rendered['document']['paper_profile']));
 
         $mpdf->useSubstitutions = true;
         $mpdf->SetWatermarkText($receipt_details->business_name, 0.1);
@@ -3098,23 +3314,12 @@ class SellPosController extends Controller
         $receipt_contents = $this->transactionUtil->getPdfContentsForGivenTransaction($business_id, $id);
         $receipt_details = $receipt_contents['receipt_details'];
         $location_details = $receipt_contents['location_details'];
+        $invoice_layout = $this->businessUtil->invoiceLayout($business_id, $location_details->invoice_layout_id);
 
-        //Generate pdf
-        $body = view('sale_pos.receipts.download_quotation_pdf')
-            ->with(compact('receipt_details', 'location_details', 'sub_status'))
-            ->render();
+        $rendered = $this->posPrintRenderer->render($receipt_details, $invoice_layout, 'quotation', true);
+        $body = $rendered['html'];
         $pdf_name = (!empty($sub_status) && $sub_status == 'proforma') ? __('lang_v1.proforma_invoice') : 'QUOTATION';
-        $mpdf = new \Mpdf\Mpdf([
-            'tempDir' => public_path('uploads/temp'),
-            'mode' => 'utf-8',
-            'autoScriptToLang' => true,
-            'autoLangToFont' => true,
-            'autoVietnamese' => true,
-            'autoArabic' => true,
-            'margin_top' => 8,
-            'margin_bottom' => 8,
-            'format' => 'A4',
-        ]);
+        $mpdf = new \Mpdf\Mpdf($this->pdfConfigForPaperProfile($rendered['document']['paper_profile']));
 
         $mpdf->useSubstitutions = true;
         $mpdf->SetWatermarkText($receipt_details->business_name, 0.1);
@@ -3138,23 +3343,11 @@ class SellPosController extends Controller
         $receipt_contents = $this->transactionUtil->getPdfContentsForGivenTransaction($business_id, $id);
         $receipt_details = $receipt_contents['receipt_details'];
         $location_details = $receipt_contents['location_details'];
+        $invoice_layout = $this->businessUtil->invoiceLayout($business_id, $location_details->invoice_layout_id);
+        $rendered = $this->posPrintRenderer->render($receipt_details, $invoice_layout, 'packing_slip', true);
+        $body = $rendered['html'];
 
-        //Generate pdf
-        $body = view('sale_pos.receipts.download_packing_list_pdf')
-            ->with(compact('receipt_details', 'location_details'))
-            ->render();
-
-        $mpdf = new \Mpdf\Mpdf([
-            'tempDir' => public_path('uploads/temp'),
-            'mode' => 'utf-8',
-            'autoScriptToLang' => true,
-            'autoLangToFont' => true,
-            'autoVietnamese' => true,
-            'autoArabic' => true,
-            'margin_top' => 8,
-            'margin_bottom' => 8,
-            'format' => 'A4',
-        ]);
+        $mpdf = new \Mpdf\Mpdf($this->pdfConfigForPaperProfile($rendered['document']['paper_profile']));
 
         $mpdf->useSubstitutions = true;
         $mpdf->SetWatermarkText($receipt_details->business_name, 0.1);
@@ -3162,6 +3355,36 @@ class SellPosController extends Controller
         $mpdf->SetTitle('PACKINGSLIP-' . $receipt_details->invoice_no . '.pdf');
         $mpdf->WriteHTML($body);
         $mpdf->Output('PACKINGSLIP-' . $receipt_details->invoice_no . '.pdf', 'I');
+    }
+
+    private function resolvePosDocumentType(bool $isPackageSlip, bool $isDeliveryNote): string
+    {
+        if ($isPackageSlip) {
+            return 'packing_slip';
+        }
+
+        if ($isDeliveryNote) {
+            return 'delivery_note';
+        }
+
+        return 'invoice';
+    }
+
+    private function pdfConfigForPaperProfile(array $paperProfile): array
+    {
+        return [
+            'tempDir' => public_path('uploads/temp'),
+            'mode' => 'utf-8',
+            'autoScriptToLang' => true,
+            'autoLangToFont' => true,
+            'autoVietnamese' => true,
+            'autoArabic' => true,
+            'margin_top' => $paperProfile['pdf_margin_top'],
+            'margin_bottom' => $paperProfile['pdf_margin_bottom'],
+            'margin_left' => $paperProfile['pdf_margin_left'],
+            'margin_right' => $paperProfile['pdf_margin_right'],
+            'format' => $paperProfile['pdf_format'],
+        ];
     }
 
     public function showServiceStaffAvailibility()
