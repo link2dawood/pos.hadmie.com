@@ -39,13 +39,10 @@ return new class extends Migration
 
         Schema::table('products', function (Blueprint $table) {
             // Replace the plain indexes added in the previous migration with unique ones.
-            $sm = Schema::getConnection()->getDoctrineSchemaManager();
-            $indexes = array_keys($sm->listTableIndexes('products'));
-
-            if (in_array('products_business_barcode_idx', $indexes, true)) {
+            if ($this->indexExists('products', 'products_business_barcode_idx')) {
                 $table->dropIndex('products_business_barcode_idx');
             }
-            if (in_array('products_business_qr_idx', $indexes, true)) {
+            if ($this->indexExists('products', 'products_business_qr_idx')) {
                 $table->dropIndex('products_business_qr_idx');
             }
 
@@ -62,5 +59,14 @@ return new class extends Migration
             $table->index(['business_id', 'barcode'], 'products_business_barcode_idx');
             $table->index(['business_id', 'qr_code_value'], 'products_business_qr_idx');
         });
+    }
+
+    private function indexExists(string $tableName, string $indexName): bool
+    {
+        return DB::table('information_schema.statistics')
+            ->whereRaw('table_schema = DATABASE()')
+            ->where('table_name', $tableName)
+            ->where('index_name', $indexName)
+            ->exists();
     }
 };

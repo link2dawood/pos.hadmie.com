@@ -1,26 +1,15 @@
 <claude-mem-context>
 # Memory Context
 
-# [pos.hadmie.com] recent context, 2026-04-25 6:40pm GMT+5
+# [pos.hadmie.com] recent context, 2026-04-25 8:07pm GMT+5
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (19,226t read) | 584,828t work | 97% savings
+Stats: 50 obs (18,200t read) | 523,249t work | 97% savings
 
 ### Apr 22, 2026
-21 5:25p 🔵 Invoice Design Registry: 6 Named Designs; elegant_modified Exists But Is Not Registered
-22 " 🔵 ZATCA QR Code (Saudi Arabia TLV Format) Already Implemented in TransactionUtil
-23 " 🔵 Each Document Type Has Its Own Isolated Print Logic — No Shared Receipt Service
-24 " 🔵 Receipt Data Builder: getReceiptDetails() Is a 1000+ Line Method Assembling Full Invoice State
-25 5:27p 🔵 invoice_layouts Table Has show_barcode Column Since Initial Creation (2018)
-26 " 🔵 BusinessLocation Has Two Invoice Layout Fields: invoice_layout_id and sale_invoice_layout_id
-27 " 🔵 slim and slim2 Receipt Templates Are Functionally Identical — Different Header Alignment Only
-28 5:28p 🔵 POS Document Rendering Architecture: Template System Overview
-29 " 🔵 InvoiceLayout Model: Full Field Inventory and Template Control Fields
-30 " 🔵 All Print/Download Routes Mapped Across POS System
-31 " ⚖️ Barcode/QR Redesign Can Reuse Existing DB Fields — No New Columns Needed at Layout Level
 32 5:29p 🔵 Barcodes Table Is for Sticker Label Layout Config, Not Product Barcode Values
 33 " 🔵 Thermal Printer Hardware Path: Printer Model Schema and printerConfig() Flow
 34 " 🔵 print_receipt_on_invoice Location Check Is Commented Out — Printing Always Enabled
@@ -61,6 +50,17 @@ Stats: 50 obs (19,226t read) | 584,828t work | 97% savings
 103 6:23p 🟣 Full Docker Stack Successfully Up: App + MySQL + phpMyAdmin With vendor_data Volume
 104 6:35p 🟣 Docker + phpMyAdmin Setup Requested for Project on Port 8011
 105 " 🟣 pos.hadmie.com Dockerized Stack Running Successfully on Port 8011
+106 6:40p 🔵 MySQL Database Named "ultimate_pos" with Two Pending Migrations
+107 " 🔵 User Authentication Uses "username" Field via Laravel Passport
+108 6:41p 🔵 Roles Follow "RoleName#BusinessId" Naming Convention; Business Table Has No "business_id" Column
+109 " 🔵 Laravel Scheduler Gated on APP_ENV; Won't Run in Local Docker
+110 " 🔵 AuditProductCodes Artisan Command Added April 23 — Linked to Pending Barcode Migrations
+111 6:42p 🟣 dev:test-user Artisan Command and "make test-user" Added for Local Development
+112 " 🟣 Test Admin User Successfully Created: testadmin / test123456 on Business 2
+113 6:50p 🔵 Barcode + QR Code Feature Implemented in ProductController with Per-Business Unique Validation
+114 " ✅ Print Invoice Permission Check Removed — Printing Now Enabled for All Users Globally
+115 6:51p 🟣 Camera Barcode/QR Scanner Added to POS Screen Using Html5Qrcode
+116 " 🔵 Barcode/QR Feature Fully Wired Across All Product and Receipt Views
 
-Access 585k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 523k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>
