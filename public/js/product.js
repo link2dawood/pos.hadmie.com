@@ -446,11 +446,12 @@ $(document).ready(function() {
 
     $(document).on('click', '.js-print-generated-code', function(e) {
         e.preventDefault();
+        var button = $(this);
         openCodePrintWindow(
-            $(this).data('image-src'),
-            $(this).data('title'),
-            $(this).data('code-value'),
-            $(this).data('price-value')
+            button.attr('data-image-src'),
+            button.attr('data-title'),
+            button.attr('data-code-value'),
+            button.attr('data-price-value')
         );
     });
 
@@ -458,14 +459,14 @@ $(document).ready(function() {
         e.preventDefault();
         var button = $(this);
         buildCodeCardDataUrl(
-            button.data('image-src'),
-            button.data('title'),
-            button.data('code-value'),
-            button.data('price-value'),
+            button.attr('data-image-src'),
+            button.attr('data-title'),
+            button.attr('data-code-value'),
+            button.attr('data-price-value'),
             function(cardDataUrl) {
                 var link = document.createElement('a');
                 link.href = cardDataUrl;
-                link.download = button.data('download-name') || 'product_code.png';
+                link.download = button.attr('data-download-name') || 'product_code.png';
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
