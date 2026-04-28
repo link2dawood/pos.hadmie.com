@@ -25,9 +25,8 @@
 						{{$product->barcode ?? '--' }}<br>
 						@if(!empty($barcode_data_uri))
 							<img src="{{ $barcode_data_uri }}" alt="Barcode" style="max-width:160px; display:block; margin-top:4px;">
-							<small class="text-muted" style="display:block; margin-top:4px;"><strong>Value:</strong> {{ $product->barcode }}</small>
 							<small class="text-muted" style="display:block;">
-								<strong>Price:</strong>
+								<strong>Selling Price:</strong>
 								@if(!is_null($code_price_value))
 									<span class="display_currency" data-currency_symbol="true">{{ $code_price_value }}</span>
 								@else
@@ -38,7 +37,6 @@
 								<button type="button" class="btn btn-default js-download-generated-code"
 									data-image-src="{{ $barcode_data_uri }}"
 									data-title="Barcode"
-									data-code-value="{{ $product->barcode }}"
 									data-price-value="{{ !is_null($code_price_value) ? $code_price_value : '--' }}"
 									data-download-name="barcode_{{ $download_safe_sku }}.png">
 									<i class="fa fa-download"></i> Download
@@ -46,7 +44,6 @@
 								<button type="button" class="btn btn-default js-print-generated-code"
 									data-image-src="{{ $barcode_data_uri }}"
 									data-title="Barcode"
-									data-code-value="{{ $product->barcode }}"
 									data-price-value="{{ !is_null($code_price_value) ? $code_price_value : '--' }}">
 									<i class="fa fa-print"></i> Print
 								</button>
@@ -56,9 +53,8 @@
 						{{$product->qr_code_value ?? '--' }}<br>
 						@if(!empty($qr_data_uri))
 							<img src="{{ $qr_data_uri }}" alt="QR code" style="max-width:100px; display:block; margin-top:4px;">
-							<small class="text-muted" style="display:block; margin-top:4px;"><strong>Value:</strong> {{ $product->qr_code_value }}</small>
 							<small class="text-muted" style="display:block;">
-								<strong>Price:</strong>
+								<strong>Selling Price:</strong>
 								@if(!is_null($code_price_value))
 									<span class="display_currency" data-currency_symbol="true">{{ $code_price_value }}</span>
 								@else
@@ -69,7 +65,6 @@
 								<button type="button" class="btn btn-default js-download-generated-code"
 									data-image-src="{{ $qr_data_uri }}"
 									data-title="QR Code"
-									data-code-value="{{ $product->qr_code_value }}"
 									data-price-value="{{ !is_null($code_price_value) ? $code_price_value : '--' }}"
 									data-download-name="qrcode_{{ $download_safe_sku }}.png">
 									<i class="fa fa-download"></i> Download
@@ -77,7 +72,6 @@
 								<button type="button" class="btn btn-default js-print-generated-code"
 									data-image-src="{{ $qr_data_uri }}"
 									data-title="QR Code"
-									data-code-value="{{ $product->qr_code_value }}"
 									data-price-value="{{ !is_null($code_price_value) ? $code_price_value : '--' }}">
 									<i class="fa fa-print"></i> Print
 								</button>
