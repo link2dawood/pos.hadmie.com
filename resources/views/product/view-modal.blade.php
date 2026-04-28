@@ -35,7 +35,14 @@
 								@endif
 							</small>
 							<div class="btn-group btn-group-xs no-print" style="margin-top:6px;">
-								<a class="btn btn-default" href="{{ $barcode_data_uri }}" download="barcode_{{ $download_safe_sku }}.png"><i class="fa fa-download"></i> Download</a>
+								<button type="button" class="btn btn-default js-download-generated-code"
+									data-image-src="{{ $barcode_data_uri }}"
+									data-title="Barcode"
+									data-code-value="{{ $product->barcode }}"
+									data-price-value="{{ !is_null($code_price_value) ? $code_price_value : '--' }}"
+									data-download-name="barcode_{{ $download_safe_sku }}.png">
+									<i class="fa fa-download"></i> Download
+								</button>
 								<button type="button" class="btn btn-default js-print-generated-code"
 									data-image-src="{{ $barcode_data_uri }}"
 									data-title="Barcode"
@@ -59,7 +66,14 @@
 								@endif
 							</small>
 							<div class="btn-group btn-group-xs no-print" style="margin-top:6px;">
-								<a class="btn btn-default" href="{{ $qr_data_uri }}" download="qrcode_{{ $download_safe_sku }}.png"><i class="fa fa-download"></i> Download</a>
+								<button type="button" class="btn btn-default js-download-generated-code"
+									data-image-src="{{ $qr_data_uri }}"
+									data-title="QR Code"
+									data-code-value="{{ $product->qr_code_value }}"
+									data-price-value="{{ !is_null($code_price_value) ? $code_price_value : '--' }}"
+									data-download-name="qrcode_{{ $download_safe_sku }}.png">
+									<i class="fa fa-download"></i> Download
+								</button>
 								<button type="button" class="btn btn-default js-print-generated-code"
 									data-image-src="{{ $qr_data_uri }}"
 									data-title="QR Code"

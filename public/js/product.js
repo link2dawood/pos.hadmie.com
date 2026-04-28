@@ -64,6 +64,45 @@ $(document).ready(function() {
         printWindow.print();
     }
 
+    function buildCodeCardDataUrl(imageSrc, title, codeValue, priceValue, callback) {
+        var image = new Image();
+        image.onload = function() {
+            var padding = 24;
+            var headingHeight = 32;
+            var lineHeight = 24;
+            var metaLines = 2;
+            var cardWidth = Math.max(420, image.width + (padding * 2));
+            var cardHeight = padding + headingHeight + image.height + 12 + (metaLines * lineHeight) + padding;
+            var canvas = document.createElement('canvas');
+            canvas.width = cardWidth;
+            canvas.height = cardHeight;
+            var ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, cardWidth, cardHeight);
+
+            ctx.fillStyle = '#111111';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(title || 'Code', cardWidth / 2, padding + 22);
+
+            var imageX = (cardWidth - image.width) / 2;
+            var imageY = padding + headingHeight;
+            ctx.drawImage(image, imageX, imageY);
+
+            ctx.font = '18px Arial';
+            ctx.fillStyle = '#333333';
+            ctx.fillText('Value: ' + (codeValue || '--'), cardWidth / 2, imageY + image.height + 26);
+            ctx.fillText('Price: ' + (priceValue || '--'), cardWidth / 2, imageY + image.height + 26 + lineHeight);
+
+            callback(canvas.toDataURL('image/png'));
+        };
+        image.onerror = function() {
+            callback(imageSrc);
+        };
+        image.src = imageSrc;
+    }
+
     function renderProductCodePreview(config) {
         var emptyHtml = '<small class="text-muted">' + config.emptyMessage + '</small>';
         var html = emptyHtml;
@@ -74,7 +113,7 @@ $(document).ready(function() {
                 '<div class="small text-muted" style="margin-top:8px;"><strong>Value:</strong> ' + escapeHtml(config.codeValue || '--') + '</div>' +
                 '<div class="small text-muted"><strong>Price:</strong> ' + escapeHtml(config.priceValue || '--') + '</div>' +
                 '<div class="btn-group btn-group-xs" style="margin-top:8px;">' +
-                '<a class="btn btn-default js-download-generated-code" href="' + config.imageSrc + '" download="' + escapeHtml(config.downloadName) + '"><i class="fa fa-download"></i> Download</a>' +
+                '<button type="button" class="btn btn-default js-download-generated-code" data-image-src="' + config.imageSrc + '" data-title="' + escapeHtml(config.altText) + '" data-code-value="' + escapeHtml(config.codeValue || '--') + '" data-price-value="' + escapeHtml(config.priceValue || '--') + '" data-download-name="' + escapeHtml(config.downloadName) + '"><i class="fa fa-download"></i> Download</button>' +
                 '<button type="button" class="btn btn-default js-print-generated-code" data-image-src="' + config.imageSrc + '" data-title="' + escapeHtml(config.altText) + '" data-code-value="' + escapeHtml(config.codeValue || '--') + '" data-price-value="' + escapeHtml(config.priceValue || '--') + '"><i class="fa fa-print"></i> Print</button>' +
                 '</div>' +
                 '</div>';
@@ -412,6 +451,25 @@ $(document).ready(function() {
             $(this).data('title'),
             $(this).data('code-value'),
             $(this).data('price-value')
+        );
+    });
+
+    $(document).on('click', '.js-download-generated-code', function(e) {
+        e.preventDefault();
+        var button = $(this);
+        buildCodeCardDataUrl(
+            button.data('image-src'),
+            button.data('title'),
+            button.data('code-value'),
+            button.data('price-value'),
+            function(cardDataUrl) {
+                var link = document.createElement('a');
+                link.href = cardDataUrl;
+                link.download = button.data('download-name') || 'product_code.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
         );
     });
     //End for product type single
