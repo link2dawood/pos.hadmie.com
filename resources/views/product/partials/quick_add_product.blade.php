@@ -27,20 +27,50 @@
         <div class="col-sm-4">
           <div class="form-group">
             {!! Form::label('barcode_type', __('product.barcode_type') . ':*') !!}
-              {!! Form::select('barcode_type', $barcode_types, 'C128', ['class' => 'form-control select2', 'required']); !!}
+              {!! Form::select('barcode_type', $barcode_types, 'C128', ['class' => 'form-control select2', 'required', 'id' => 'barcode_type']); !!}
           </div>
         </div>
         <div class="clearfix"></div>
         <div class="col-sm-4">
           <div class="form-group">
             {!! Form::label('barcode', 'Barcode:') !!}
-            {!! Form::text('barcode', null, ['class' => 'form-control', 'placeholder' => 'Optional manual barcode']); !!}
+            <div class="input-group">
+              {!! Form::text('barcode', null, ['class' => 'form-control', 'id' => 'barcode', 'placeholder' => 'Optional manual barcode']); !!}
+              <span class="input-group-btn">
+                <button type="button" class="btn btn-default js-generate-product-code" data-action="barcode">Generate</button>
+              </span>
+            </div>
           </div>
         </div>
         <div class="col-sm-4">
           <div class="form-group">
             {!! Form::label('qr_code_value', 'QR code value:') !!}
-            {!! Form::text('qr_code_value', null, ['class' => 'form-control', 'placeholder' => 'Optional manual QR value']); !!}
+            <div class="input-group">
+              {!! Form::text('qr_code_value', null, ['class' => 'form-control', 'id' => 'qr_code_value', 'placeholder' => 'Optional manual QR value']); !!}
+              <span class="input-group-btn">
+                <button type="button" class="btn btn-default js-generate-product-code" data-action="qr">Generate</button>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="row">
+            <div class="col-xs-6">
+              <div class="well well-sm text-center">
+                <strong>Barcode preview</strong>
+                <div class="js-product-barcode-preview" style="margin-top: 10px;">
+                  <small class="text-muted">No barcode yet</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-xs-6">
+              <div class="well well-sm text-center">
+                <strong>QR preview</strong>
+                <div class="js-product-qr-preview" style="margin-top: 10px;">
+                  <small class="text-muted">No QR yet</small>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="clearfix"></div>

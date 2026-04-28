@@ -5,20 +5,69 @@
 		      <h4 class="modal-title" id="modalTitle">{{$product->name}}</h4>
 	    </div>
 	    <div class="modal-body">
-      		<div class="row">
-      			<div class="col-sm-9">
-	      			<div class="col-sm-4 invoice-col">
-	      				<b>@lang('product.sku'):</b>
+	    	@php
+	    		$primary_variation = $product->variations->first();
+	    		$code_price_value = !empty($primary_variation) ? $primary_variation->sell_price_inc_tax : null;
+	    		$barcode_data_uri = !empty($product->barcode)
+	    			? 'data:image/png;base64,' . DNS1D::getBarcodePNG($product->barcode, $product->barcode_type ?: 'C128', 2, 60, [17, 24, 39], true)
+	    			: null;
+	    		$qr_data_uri = !empty($product->qr_code_value)
+	    			? 'data:image/png;base64,' . DNS2D::getBarcodePNG($product->qr_code_value, 'QRCODE', 4, 4, [17, 24, 39])
+	    			: null;
+	    		$download_safe_sku = preg_replace('/[^A-Za-z0-9._-]+/', '_', $product->sku ?? ('product_'.$product->id));
+	    	@endphp
+	      		<div class="row">
+	      			<div class="col-sm-9">
+	      				<div class="col-sm-4 invoice-col">
+	      					<b>@lang('product.sku'):</b>
 						{{$product->sku }}<br>
 						<b>Barcode:</b>
 						{{$product->barcode ?? '--' }}<br>
-						@if(!empty($product->barcode))
-							<img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($product->barcode, $product->barcode_type ?: 'C128', 2, 60, [17, 24, 39], true) }}" alt="Barcode" style="max-width:160px; display:block; margin-top:4px;">
+						@if(!empty($barcode_data_uri))
+							<img src="{{ $barcode_data_uri }}" alt="Barcode" style="max-width:160px; display:block; margin-top:4px;">
+							<small class="text-muted" style="display:block; margin-top:4px;"><strong>Value:</strong> {{ $product->barcode }}</small>
+							<small class="text-muted" style="display:block;">
+								<strong>Price:</strong>
+								@if(!is_null($code_price_value))
+									<span class="display_currency" data-currency_symbol="true">{{ $code_price_value }}</span>
+								@else
+									--
+								@endif
+							</small>
+							<div class="btn-group btn-group-xs no-print" style="margin-top:6px;">
+								<a class="btn btn-default" href="{{ $barcode_data_uri }}" download="barcode_{{ $download_safe_sku }}.png"><i class="fa fa-download"></i> Download</a>
+								<button type="button" class="btn btn-default js-print-generated-code"
+									data-image-src="{{ $barcode_data_uri }}"
+									data-title="Barcode"
+									data-code-value="{{ $product->barcode }}"
+									data-price-value="{{ !is_null($code_price_value) ? $code_price_value : '--' }}">
+									<i class="fa fa-print"></i> Print
+								</button>
+							</div>
 						@endif
 						<b>QR value:</b>
 						{{$product->qr_code_value ?? '--' }}<br>
-						@if(!empty($product->qr_code_value))
-							<img src="data:image/png;base64,{{ DNS2D::getBarcodePNG($product->qr_code_value, 'QRCODE', 4, 4, [17, 24, 39]) }}" alt="QR code" style="max-width:100px; display:block; margin-top:4px;">
+						@if(!empty($qr_data_uri))
+							<img src="{{ $qr_data_uri }}" alt="QR code" style="max-width:100px; display:block; margin-top:4px;">
+							<small class="text-muted" style="display:block; margin-top:4px;"><strong>Value:</strong> {{ $product->qr_code_value }}</small>
+							<small class="text-muted" style="display:block;">
+								<strong>Price:</strong>
+								@if(!is_null($code_price_value))
+									<span class="display_currency" data-currency_symbol="true">{{ $code_price_value }}</span>
+								@else
+									--
+								@endif
+							</small>
+							<div class="btn-group btn-group-xs no-print" style="margin-top:6px;">
+								<a class="btn btn-default" href="{{ $qr_data_uri }}" download="qrcode_{{ $download_safe_sku }}.png"><i class="fa fa-download"></i> Download</a>
+								<button type="button" class="btn btn-default js-print-generated-code"
+									data-image-src="{{ $qr_data_uri }}"
+									data-title="QR Code"
+									data-code-value="{{ $product->qr_code_value }}"
+									data-price-value="{{ !is_null($code_price_value) ? $code_price_value : '--' }}">
+									<i class="fa fa-print"></i> Print
+								</button>
+							</div>
 						@endif
 						<b>@lang('product.brand'): </b>
 						{{$product->brand->name ?? '--' }}<br>

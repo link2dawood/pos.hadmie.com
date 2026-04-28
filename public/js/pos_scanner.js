@@ -2,7 +2,16 @@
     'use strict';
 
     function scanInput() {
-        return $('#scan_product_code');
+        return $('#search_product');
+    }
+
+    function looksLikeScannableCode(value) {
+        var trimmed = $.trim(value || '');
+        if (trimmed.length < 2) {
+            return false;
+        }
+
+        return /^[A-Za-z0-9._\-|:/+]+$/.test(trimmed);
     }
 
     function scannerStatus(message, type) {
@@ -71,7 +80,7 @@
                 if (result.success) {
                     var addedToCart = pos_product_row(result.variation_id, null, null, result.quantity || 1, {
                         forceIncrementExisting: true,
-                        focusSelector: '#scan_product_code',
+                        focusSelector: '#search_product',
                         suppressErrorToast: true,
                         onResult: function(operationResult) {
                             cartAction = operationResult.action || null;
@@ -201,10 +210,12 @@
                 });
         }
 
-        $(document).on('keydown', '#scan_product_code', function(e) {
+        $(document).on('keydown', '#search_product', function(e) {
             if (e.key === 'Enter') {
-                e.preventDefault();
-                sharedScanLookup($(this).val(), 'scanner');
+                if (looksLikeScannableCode($(this).val())) {
+                    e.preventDefault();
+                    sharedScanLookup($(this).val(), 'scanner');
+                }
             }
         });
 

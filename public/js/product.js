@@ -3,13 +3,84 @@
 $(document).ready(function() {
     var productCodePreviewTimer;
 
-    function renderProductCodePreview(previewSelector, imageSrc, emptyMessage, altText) {
-        var html = '<small class="text-muted">' + emptyMessage + '</small>';
-        if (imageSrc) {
-            html = '<img src="' + imageSrc + '" alt="' + altText + '" style="max-width: 100%;">';
+    function escapeHtml(value) {
+        return $('<div/>').text(value || '').html();
+    }
+
+    function sanitizeFileName(value, fallbackValue) {
+        var normalized = String(value || '')
+            .trim()
+            .replace(/[^a-zA-Z0-9._-]+/g, '_')
+            .replace(/^_+|_+$/g, '');
+
+        return normalized || fallbackValue;
+    }
+
+    function resolveCurrentCodePrice() {
+        var fieldSelectors = [
+            'input#single_dsp_inc_tax',
+            'input#single_dsp',
+            'input.variable_dsp_inc_tax:visible:first',
+            'input.variable_dsp:visible:first',
+        ];
+
+        for (var i = 0; i < fieldSelectors.length; i++) {
+            var field = $(fieldSelectors[i]).first();
+            if (field.length) {
+                var value = $.trim(field.val() || '');
+                if (value !== '') {
+                    return value;
+                }
+            }
         }
 
-        $(previewSelector).html(html);
+        return '';
+    }
+
+    function openCodePrintWindow(imageSrc, title, codeValue, priceValue) {
+        if (!imageSrc) {
+            return;
+        }
+
+        var printWindow = window.open('', '_blank', 'width=900,height=700');
+        if (!printWindow) {
+            toastr.error('Please allow popups to print the code.');
+            return;
+        }
+
+        var safeTitle = escapeHtml(title || 'Code Print');
+        var safeCodeValue = escapeHtml(codeValue || '--');
+        var safePriceValue = escapeHtml(priceValue || '--');
+
+        printWindow.document.open();
+        printWindow.document.write(
+            '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + safeTitle + '</title>' +
+            '<style>body{font-family:Arial,sans-serif;margin:24px;color:#111}.code-wrap{text-align:center}img{max-width:100%;height:auto}.meta{margin-top:12px;font-size:14px}.meta div{margin:4px 0}</style>' +
+            '</head><body><div class="code-wrap"><h2>' + safeTitle + '</h2><img src="' + imageSrc + '" alt="' + safeTitle + '">' +
+            '<div class="meta"><div><strong>Value:</strong> ' + safeCodeValue + '</div><div><strong>Price:</strong> ' + safePriceValue + '</div></div></div></body></html>'
+        );
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+    }
+
+    function renderProductCodePreview(config) {
+        var emptyHtml = '<small class="text-muted">' + config.emptyMessage + '</small>';
+        var html = emptyHtml;
+
+        if (config.imageSrc) {
+            html = '<div class="code-preview-block">' +
+                '<img src="' + config.imageSrc + '" alt="' + escapeHtml(config.altText) + '" style="max-width: 100%;">' +
+                '<div class="small text-muted" style="margin-top:8px;"><strong>Value:</strong> ' + escapeHtml(config.codeValue || '--') + '</div>' +
+                '<div class="small text-muted"><strong>Price:</strong> ' + escapeHtml(config.priceValue || '--') + '</div>' +
+                '<div class="btn-group btn-group-xs" style="margin-top:8px;">' +
+                '<a class="btn btn-default js-download-generated-code" href="' + config.imageSrc + '" download="' + escapeHtml(config.downloadName) + '"><i class="fa fa-download"></i> Download</a>' +
+                '<button type="button" class="btn btn-default js-print-generated-code" data-image-src="' + config.imageSrc + '" data-title="' + escapeHtml(config.altText) + '" data-code-value="' + escapeHtml(config.codeValue || '--') + '" data-price-value="' + escapeHtml(config.priceValue || '--') + '"><i class="fa fa-print"></i> Print</button>' +
+                '</div>' +
+                '</div>';
+        }
+
+        $(config.previewSelector).html(html);
     }
 
     function refreshProductCodePreview(action) {
@@ -42,8 +113,27 @@ $(document).ready(function() {
                     $('#qr_code_value').val(response.qr_code_value || '');
                 }
 
-                renderProductCodePreview('.js-product-barcode-preview', response.barcode_preview, 'No barcode yet', 'Barcode preview');
-                renderProductCodePreview('.js-product-qr-preview', response.qr_preview, 'No QR yet', 'QR preview');
+                var currentPrice = resolveCurrentCodePrice();
+                var skuForFileName = sanitizeFileName(response.sku, 'product_code');
+
+                renderProductCodePreview({
+                    previewSelector: '.js-product-barcode-preview',
+                    imageSrc: response.barcode_preview,
+                    emptyMessage: 'No barcode yet',
+                    altText: 'Barcode preview',
+                    codeValue: response.barcode || $('#barcode').val(),
+                    priceValue: currentPrice,
+                    downloadName: 'barcode_' + skuForFileName + '.png',
+                });
+                renderProductCodePreview({
+                    previewSelector: '.js-product-qr-preview',
+                    imageSrc: response.qr_preview,
+                    emptyMessage: 'No QR yet',
+                    altText: 'QR preview',
+                    codeValue: response.qr_code_value || $('#qr_code_value').val(),
+                    priceValue: currentPrice,
+                    downloadName: 'qrcode_' + skuForFileName + '.png',
+                });
             },
         });
     }
@@ -307,6 +397,23 @@ $(document).ready(function() {
             refreshProductCodePreview('preview');
         }, 250);
     });
+
+    $(document).on('input change', '#single_dsp, #single_dsp_inc_tax, .variable_dsp, .variable_dsp_inc_tax, #tax_type', function() {
+        clearTimeout(productCodePreviewTimer);
+        productCodePreviewTimer = setTimeout(function() {
+            refreshProductCodePreview('preview');
+        }, 250);
+    });
+
+    $(document).on('click', '.js-print-generated-code', function(e) {
+        e.preventDefault();
+        openCodePrintWindow(
+            $(this).data('image-src'),
+            $(this).data('title'),
+            $(this).data('code-value'),
+            $(this).data('price-value')
+        );
+    });
     //End for product type single
 
     //Start for product type Variable
@@ -560,6 +667,12 @@ $(document).ready(function() {
     if ($('#barcode').length || $('#qr_code_value').length) {
         refreshProductCodePreview('preview');
     }
+
+    $(document).on('shown.bs.modal', '.quick_add_product_modal', function() {
+        if ($(this).find('#barcode').length || $(this).find('#qr_code_value').length) {
+            refreshProductCodePreview('preview');
+        }
+    });
 
     //If tax rate is changed
     $(document).on('change', 'select#tax', function() {

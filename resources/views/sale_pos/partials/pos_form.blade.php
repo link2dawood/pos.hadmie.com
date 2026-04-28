@@ -33,11 +33,11 @@
 					<button type="button" class="btn btn-default bg-white btn-flat" data-toggle="modal" data-target="#configure_search_modal" title="{{__('lang_v1.configure_product_search')}}"><i class="fas fa-search-plus"></i></button>
 				</div>
                 {{-- Removed mousetrap class as it was causing issue with barcode scanning --}}
-				{!! Form::text('search_product', null, ['class' => 'form-control', 'id' => 'search_product', 'placeholder' => __('lang_v1.search_product_placeholder'),
-				'disabled' => is_null($default_location)? true : false,
-				'autofocus' => is_null($default_location)? false : true,
-				]); !!}
-				<span class="input-group-btn">
+					{!! Form::text('search_product', null, ['class' => 'form-control', 'id' => 'search_product', 'placeholder' => 'Scan Barcode / QR / Enter product Name / SKU',
+					'disabled' => is_null($default_location)? true : false,
+					'autofocus' => is_null($default_location)? false : true,
+					]); !!}
+					<span class="input-group-btn">
 
 					<!-- Show button for weighing scale modal -->
 					@if(isset($pos_settings['enable_weighing_scale']) && $pos_settings['enable_weighing_scale'] == 1)
@@ -46,24 +46,13 @@
 					@endif
 					
 
-					<button type="button" class="btn btn-default bg-white btn-flat pos_add_quick_product" data-href="{{action([\App\Http\Controllers\ProductController::class, 'quickAdd'])}}" data-container=".quick_add_product_modal"><i class="fa fa-plus-circle text-primary fa-lg"></i></button>
-				</span>
+						<button type="button" class="btn btn-default bg-white btn-flat pos_add_quick_product" data-href="{{action([\App\Http\Controllers\ProductController::class, 'quickAdd'])}}" data-container=".quick_add_product_modal"><i class="fa fa-plus-circle text-primary fa-lg"></i></button>
+						<button type="button" class="btn btn-default bg-white btn-flat" id="open_camera_scan_modal" data-toggle="modal" data-target="#pos_camera_scan_modal" title="Scan with camera" @if(is_null($default_location)) disabled @endif><i class="fa fa-camera text-primary fa-lg"></i></button>
+					</span>
+				</div>
 			</div>
-		</div>
-		<div class="form-group">
-			<div class="input-group">
-				<span class="input-group-addon">
-					<i class="fa fa-barcode"></i>
-				</span>
-				{!! Form::text('scan_product_code', null, ['class' => 'form-control', 'id' => 'scan_product_code', 'placeholder' => 'Scan barcode / QR to add instantly', 'autocomplete' => 'off', 'disabled' => is_null($default_location) ? true : false]); !!}
-				<span class="input-group-btn">
-					<button type="button" class="btn btn-default bg-white btn-flat" id="open_camera_scan_modal" data-toggle="modal" data-target="#pos_camera_scan_modal" title="Scan with camera" @if(is_null($default_location)) disabled @endif><i class="fa fa-camera text-primary fa-lg"></i></button>
-				</span>
-			</div>
-			<small class="help-block">Keep this field focused for hardware scanners. Repeated scans auto-increment the line quantity.</small>
 		</div>
 	</div>
-</div>
 <div class="row">
 	@if(!empty($pos_settings['show_invoice_layout']))
 	<div class="col-md-4">

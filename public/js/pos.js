@@ -2201,11 +2201,9 @@ function set_location() {
         $('input#search_product')
             .prop('disabled', false)
             .focus();
-        $('input#scan_product_code').prop('disabled', false);
         $('#open_camera_scan_modal').prop('disabled', false);
     } else {
         $('input#search_product').prop('disabled', true);
-        $('input#scan_product_code').prop('disabled', true).val('');
         $('#open_camera_scan_modal').prop('disabled', true);
     }
 

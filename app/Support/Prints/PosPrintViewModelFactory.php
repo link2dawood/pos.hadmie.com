@@ -392,12 +392,16 @@ class PosPrintViewModelFactory
 
     protected function buildCodes(object $receiptDetails, array $paperProfile): array
     {
+        $priceLabel = trim(strip_tags($receiptDetails->total_label ?? 'Total'));
+
         return [
             'show_barcode' => ! empty($receiptDetails->show_barcode) && ! empty($receiptDetails->barcode),
             'barcode_value' => $receiptDetails->barcode ?? null,
             'show_qr_code' => ! empty($receiptDetails->show_qr_code) && (! empty($receiptDetails->qr_code_text) || ! empty($receiptDetails->qr_code)),
             'qr_value' => $receiptDetails->qr_code_text ?? null,
             'qr_image' => $receiptDetails->qr_code ?? null,
+            'price_label' => $priceLabel !== '' ? $priceLabel : 'Total',
+            'price_value' => $receiptDetails->total ?? null,
             'barcode_scale' => $paperProfile['barcode_scale'],
             'barcode_height' => $paperProfile['barcode_height'],
             'qr_size' => $paperProfile['qr_size'],
