@@ -12,8 +12,14 @@
 						{{$product->sku }}<br>
 						<b>Barcode:</b>
 						{{$product->barcode ?? '--' }}<br>
+						@if(!empty($product->barcode))
+							<img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($product->barcode, $product->barcode_type ?: 'C128', 2, 60, [17, 24, 39], true) }}" alt="Barcode" style="max-width:160px; display:block; margin-top:4px;">
+						@endif
 						<b>QR value:</b>
 						{{$product->qr_code_value ?? '--' }}<br>
+						@if(!empty($product->qr_code_value))
+							<img src="data:image/png;base64,{{ DNS2D::getBarcodePNG($product->qr_code_value, 'QRCODE', 4, 4, [17, 24, 39]) }}" alt="QR code" style="max-width:100px; display:block; margin-top:4px;">
+						@endif
 						<b>@lang('product.brand'): </b>
 						{{$product->brand->name ?? '--' }}<br>
 						<b>@lang('product.unit'): </b>
