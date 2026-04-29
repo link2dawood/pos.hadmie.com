@@ -2814,7 +2814,11 @@ class SellPosController extends Controller
         }
 
         if ($barcodeProduct->count() === 1) {
-            return $this->resolveProductScanMatch($barcodeProduct->first(), 'barcode');
+            $barcodeResult = $this->resolveProductScanMatch($barcodeProduct->first(), 'barcode');
+            if ($barcodeResult['success']) {
+                return $barcodeResult;
+            }
+            // Product found by barcode but has multiple variations — fall through to sub_sku lookup
         }
 
         $qrProduct = Product::where('business_id', $business_id)
@@ -2825,7 +2829,10 @@ class SellPosController extends Controller
                     ->with(['product_variation']);
             }])
             ->whereNotNull('qr_code_value')
-            ->whereRaw('TRIM(qr_code_value) = ?', [$rawCode])
+            ->where(function ($query) use ($rawCode, $normalizedCode) {
+                $query->whereRaw('TRIM(qr_code_value) = ?', [$rawCode])
+                    ->orWhereRaw("UPPER(REPLACE(qr_code_value, ' ', '')) = ?", [$normalizedCode]);
+            })
             ->get();
 
         if ($qrProduct->count() > 1) {
@@ -2836,7 +2843,11 @@ class SellPosController extends Controller
         }
 
         if ($qrProduct->count() === 1) {
-            return $this->resolveProductScanMatch($qrProduct->first(), 'qr');
+            $qrResult = $this->resolveProductScanMatch($qrProduct->first(), 'qr');
+            if ($qrResult['success']) {
+                return $qrResult;
+            }
+            // Product found by QR value but has multiple variations — fall through to sub_sku lookup
         }
 
         $variation = Variation::join('products', 'variations.product_id', '=', 'products.id')

@@ -8,13 +8,30 @@
 	    	@php
 	    		$primary_variation = $product->variations->first();
 	    		$code_price_value = !empty($primary_variation) ? $primary_variation->sell_price_inc_tax : null;
-	    		$barcode_data_uri = !empty($product->barcode)
-	    			? 'data:image/png;base64,' . DNS1D::getBarcodePNG($product->barcode, $product->barcode_type ?: 'C128', 2, 60, [17, 24, 39], true)
+
+	    		// sub_sku is what the label system encodes in QR codes and what POS scanner matches
+	    		$qr_scan_value = (!empty($primary_variation) && !empty($primary_variation->sub_sku))
+	    			? $primary_variation->sub_sku
+	    			: ($product->qr_code_value ?? $product->sku);
+	    		$barcode_scan_value = !empty($product->barcode) ? $product->barcode : $qr_scan_value;
+
+	    		$barcode_data_uri = !empty($barcode_scan_value)
+	    			? 'data:image/png;base64,' . DNS1D::getBarcodePNG($barcode_scan_value, $product->barcode_type ?: 'C128', 2, 60, [17, 24, 39], true)
 	    			: null;
-	    		$qr_data_uri = !empty($product->qr_code_value)
-	    			? 'data:image/png;base64,' . DNS2D::getBarcodePNG($product->qr_code_value, 'QRCODE', 4, 4, [17, 24, 39])
+	    		$qr_data_uri = !empty($qr_scan_value)
+	    			? 'data:image/png;base64,' . DNS2D::getBarcodePNG($qr_scan_value, 'QRCODE', 4, 4, [17, 24, 39])
 	    			: null;
 	    		$download_safe_sku = preg_replace('/[^A-Za-z0-9._-]+/', '_', $product->sku ?? ('product_'.$product->id));
+
+	    		// Pre-format price with currency so the printed/downloaded card matches the label design
+	    		$_currency     = session('currency') ?? [];
+	    		$_decimal_sep  = $_currency['decimal_separator']  ?? '.';
+	    		$_thousand_sep = $_currency['thousand_separator'] ?? ',';
+	    		$_precision    = (int) session('business.currency_precision', 2);
+	    		$_symbol       = $_currency['symbol'] ?? '';
+	    		$formatted_display_price = !is_null($code_price_value)
+	    			? $_symbol . ' ' . number_format((float) $code_price_value, $_precision, $_decimal_sep, $_thousand_sep)
+	    			: '--';
 	    	@endphp
 	      		<div class="row">
 	      			<div class="col-sm-9">
@@ -36,15 +53,17 @@
 							<div class="btn-group btn-group-xs no-print" style="margin-top:6px;">
 								<button type="button" class="btn btn-default js-download-generated-code"
 									data-image-src="{{ $barcode_data_uri }}"
-									data-title="Barcode"
-									data-price-value="{{ !is_null($code_price_value) ? $code_price_value : '--' }}"
+									data-product-name="{{ $product->name }}"
+									data-code-value="{{ $barcode_scan_value }}"
+									data-price-value="{{ $formatted_display_price }}"
 									data-download-name="barcode_{{ $download_safe_sku }}.png">
 									<i class="fa fa-download"></i> Download
 								</button>
 								<button type="button" class="btn btn-default js-print-generated-code"
 									data-image-src="{{ $barcode_data_uri }}"
-									data-title="Barcode"
-									data-price-value="{{ !is_null($code_price_value) ? $code_price_value : '--' }}">
+									data-product-name="{{ $product->name }}"
+									data-code-value="{{ $barcode_scan_value }}"
+									data-price-value="{{ $formatted_display_price }}">
 									<i class="fa fa-print"></i> Print
 								</button>
 							</div>
@@ -64,17 +83,22 @@
 							<div class="btn-group btn-group-xs no-print" style="margin-top:6px;">
 								<button type="button" class="btn btn-default js-download-generated-code"
 									data-image-src="{{ $qr_data_uri }}"
-									data-title="QR Code"
-									data-price-value="{{ !is_null($code_price_value) ? $code_price_value : '--' }}"
+									data-product-name="{{ $product->name }}"
+									data-code-value="{{ $qr_scan_value }}"
+									data-price-value="{{ $formatted_display_price }}"
 									data-download-name="qrcode_{{ $download_safe_sku }}.png">
 									<i class="fa fa-download"></i> Download
 								</button>
 								<button type="button" class="btn btn-default js-print-generated-code"
 									data-image-src="{{ $qr_data_uri }}"
-									data-title="QR Code"
-									data-price-value="{{ !is_null($code_price_value) ? $code_price_value : '--' }}">
+									data-product-name="{{ $product->name }}"
+									data-code-value="{{ $qr_scan_value }}"
+									data-price-value="{{ $formatted_display_price }}">
 									<i class="fa fa-print"></i> Print
 								</button>
+								<a href="{{ url('/labels/show?product_id=' . $product->id) }}" target="_blank" class="btn btn-default btn-xs" style="margin-top:4px;display:inline-block;">
+									<i class="fa fa-tag"></i> Print Label Sheet
+								</a>
 							</div>
 						@endif
 						<b>@lang('product.brand'): </b>

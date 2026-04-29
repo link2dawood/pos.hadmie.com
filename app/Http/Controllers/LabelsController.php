@@ -104,21 +104,18 @@ class LabelsController extends Controller
     public function preview(Request $request)
     {
         try {
-            $products = $request->get('products');
-            $print = $request->get('print');
+            $products = $request->get('products', []);
+            $print = $request->get('print', []);
             $barcode_setting = $request->get('barcode_setting');
             $business_id = $request->session()->get('user.business_id');
 
-            $barcode_details = Barcode::find($barcode_setting);
+            $barcode_details = Barcode::findOrFail($barcode_setting);
             $barcode_details->stickers_in_one_sheet = $barcode_details->is_continuous ? $barcode_details->stickers_in_one_row : $barcode_details->stickers_in_one_sheet;
             $barcode_details->paper_height = $barcode_details->is_continuous ? $barcode_details->height : $barcode_details->paper_height;
             if ($barcode_details->stickers_in_one_row == 1) {
                 $barcode_details->col_distance = 0;
                 $barcode_details->row_distance = 0;
             }
-            // if($barcode_details->is_continuous){
-            //     $barcode_details->row_distance = 0;
-            // }
 
             $business_name = $request->session()->get('business.name');
 
@@ -163,80 +160,35 @@ class LabelsController extends Controller
             $paper_width = $barcode_details->paper_width * 1;
             $paper_height = $barcode_details->paper_height * 1;
 
-            // print_r($paper_height);
-            // echo "==";
-            // print_r($margin_left);exit;
-
-            // $mpdf = new \Mpdf\Mpdf(['mode' => 'utf-8',
-            //             'format' => [$paper_width, $paper_height],
-            //             'margin_top' => $margin_top,
-            //             'margin_bottom' => $margin_top,
-            //             'margin_left' => $margin_left,
-            //             'margin_right' => $margin_left,
-            //             'autoScriptToLang' => true,
-            //             // 'disablePrintCSS' => true,
-            // 'autoLangToFont' => true,
-            // 'autoVietnamese' => true,
-            // 'autoArabic' => true
-            //             ]
-            //         );
-            //print_r($mpdf);exit;
-
-            $i = 0;
-            $len = count($product_details_page_wise);
-            $is_first = false;
-            $is_last = false;
-
-            //$original_aspect_ratio = 4;//(w/h)
-            $factor = (($barcode_details->width / $barcode_details->height)) / ($barcode_details->is_continuous ? 2 : 4);
-            $html = '';
+            $pages_html = '';
+            $total_pages = count($product_details_page_wise);
             foreach ($product_details_page_wise as $page => $page_products) {
-                if ($i == 0) {
-                    $is_first = true;
-                }
-
-                if ($i == $len - 1) {
-                    $is_last = true;
-                }
-
-                $output = view('labels.partials.preview_2')
-                            ->with(compact('print', 'page_products', 'business_name', 'barcode_details', 'margin_top', 'margin_left', 'paper_width', 'paper_height', 'is_first', 'is_last', 'factor'))->render();
-                print_r($output);
-                //$mpdf->WriteHTML($output);
-
-                // if($i < $len - 1){
-                //     // '', '', '', '', '', '', $margin_left, $margin_left, $margin_top, $margin_top, '', '', '', '', '', '', 0, 0, 0, 0, '', [$barcode_details->paper_width*1, $barcode_details->paper_height*1]
-                //     $mpdf->AddPage();
-                // }
-
-                $i++;
+                $pages_html .= view('labels.partials.preview_2')
+                    ->with([
+                        'print' => $print,
+                        'page_products' => $page_products,
+                        'business_name' => $business_name,
+                        'barcode_details' => $barcode_details,
+                        'margin_top' => $margin_top,
+                        'margin_left' => $margin_left,
+                        'paper_width' => $paper_width,
+                        'paper_height' => $paper_height,
+                        'is_last' => ($page + 1) === $total_pages,
+                    ])->render();
             }
 
-            print_r('<script>window.print()</script>');
-            exit;
-            //return $output;
-
-            //$mpdf->Output();
-
-            // $page_height = null;
-            // if ($barcode_details->is_continuous) {
-            //     $rows = ceil($total_qty/$barcode_details->stickers_in_one_row) + 0.4;
-            //     $barcode_details->paper_height = $barcode_details->top_margin + ($rows*$barcode_details->height) + ($rows*$barcode_details->row_distance);
-            // }
-
-            // $output = view('labels.partials.preview')
-            //     ->with(compact('print', 'product_details', 'business_name', 'barcode_details', 'product_details_page_wise'))->render();
-
-            // $output = ['html' => $html,
-            //                 'success' => true,
-            //                 'msg' => ''
-            //             ];
+            return response()->view('labels.partials.preview_document', [
+                'pages_html' => $pages_html,
+                'barcode_details' => $barcode_details,
+                'paper_width' => $paper_width,
+                'paper_height' => $paper_height,
+                'margin_top' => $margin_top,
+                'margin_left' => $margin_left,
+            ]);
         } catch (\Exception $e) {
             \Log::emergency('File:'.$e->getFile().'Line:'.$e->getLine().'Message:'.$e->getMessage());
 
-            $output = __('lang_v1.barcode_label_error');
+            return response(__('lang_v1.barcode_label_error'), 500);
         }
-
-        //return $output;
     }
 }

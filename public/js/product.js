@@ -39,61 +39,106 @@ $(document).ready(function() {
         return '';
     }
 
-    function openCodePrintWindow(imageSrc, title, priceValue) {
-        if (!imageSrc) {
-            return;
-        }
+    function resolveCurrentProductName() {
+        var nameField = $('#name').first();
 
-        var printWindow = window.open('', '_blank', 'width=900,height=700');
-        if (!printWindow) {
-            toastr.error('Please allow popups to print the code.');
-            return;
-        }
-
-        var safeTitle = escapeHtml(title || 'Code Print');
-        var safePriceValue = escapeHtml(priceValue || '--');
-
-        printWindow.document.open();
-        printWindow.document.write(
-            '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + safeTitle + '</title>' +
-            '<style>body{font-family:Arial,sans-serif;margin:24px;color:#111}.code-wrap{text-align:center}img{max-width:100%;height:auto}.meta{margin-top:12px;font-size:14px}.meta div{margin:4px 0}</style>' +
-            '</head><body><div class="code-wrap"><h2>' + safeTitle + '</h2><img src="' + imageSrc + '" alt="' + safeTitle + '">' +
-            '<div class="meta"><div><strong>Selling Price:</strong> ' + safePriceValue + '</div></div></div></body></html>'
-        );
-        printWindow.document.close();
-        printWindow.focus();
-        printWindow.print();
+        return $.trim(nameField.val() || '') || 'Product';
     }
 
-    function buildCodeCardDataUrl(imageSrc, title, priceValue, callback) {
+    function wrapCanvasText(ctx, text, maxWidth) {
+        var content = $.trim(text || '');
+        if (!content) {
+            return [];
+        }
+
+        var words = content.split(/\s+/);
+        var lines = [];
+        var currentLine = words.shift() || '';
+
+        while (words.length) {
+            var nextWord = words.shift();
+            var candidate = currentLine + ' ' + nextWord;
+            if (ctx.measureText(candidate).width <= maxWidth) {
+                currentLine = candidate;
+            } else {
+                lines.push(currentLine);
+                currentLine = nextWord;
+            }
+        }
+
+        if (currentLine) {
+            lines.push(currentLine);
+        }
+
+        return lines;
+    }
+
+    function buildCodeCardDataUrl(imageSrc, productName, priceValue, codeValue, callback) {
         var image = new Image();
         image.onload = function() {
-            var padding = 24;
-            var headingHeight = 32;
-            var lineHeight = 24;
-            var metaLines = 1;
-            var cardWidth = Math.max(420, image.width + (padding * 2));
-            var cardHeight = padding + headingHeight + image.height + 12 + (metaLines * lineHeight) + padding;
+            var padding = 32;
+            var cardWidth = 760;
+            var contentWidth = cardWidth - (padding * 2);
+            var priceText = 'Price: ' + (priceValue || '--');
+            var skuText = $.trim(codeValue || '');
+            var imageMaxWidth = contentWidth;
+            var imageScale = Math.min(1, imageMaxWidth / image.width);
+            var drawnImageWidth = image.width * imageScale;
+            var drawnImageHeight = image.height * imageScale;
             var canvas = document.createElement('canvas');
+            var ctx = canvas.getContext('2d');
+            var titleLineHeight = 38;
+            var priceLineHeight = 34;
+            var skuLineHeight = 28;
+            var name = String(productName || 'Product').toUpperCase();
+
+            ctx.font = 'bold 30px Arial';
+            var titleLines = wrapCanvasText(ctx, name, contentWidth);
+
+            var cardHeight = padding +
+                (titleLines.length * titleLineHeight) +
+                8 +
+                priceLineHeight +
+                18 +
+                drawnImageHeight +
+                (skuText ? skuLineHeight : 0) +
+                padding;
+
             canvas.width = cardWidth;
             canvas.height = cardHeight;
-            var ctx = canvas.getContext('2d');
 
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, cardWidth, cardHeight);
 
-            ctx.fillStyle = '#111111';
-            ctx.font = 'bold 24px Arial';
+            ctx.strokeStyle = '#243b53';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(10, 10, cardWidth - 20, cardHeight - 20);
+
             ctx.textAlign = 'center';
-            ctx.fillText(title || 'Code', cardWidth / 2, padding + 22);
+            ctx.fillStyle = '#1d3557';
+            ctx.font = 'bold 30px Arial';
 
-            var imageX = (cardWidth - image.width) / 2;
-            var imageY = padding + headingHeight;
-            ctx.drawImage(image, imageX, imageY);
+            var currentY = padding + 28;
+            titleLines.forEach(function(line) {
+                ctx.fillText(line, cardWidth / 2, currentY);
+                currentY += titleLineHeight;
+            });
 
-            ctx.font = '18px Arial';
-            ctx.fillStyle = '#333333';
-            ctx.fillText('Selling Price: ' + (priceValue || '--'), cardWidth / 2, imageY + image.height + 26);
+            ctx.fillStyle = '#111111';
+            ctx.font = '28px Arial';
+            ctx.fillText(priceText, cardWidth / 2, currentY);
+
+            currentY += 18;
+
+            var imageX = (cardWidth - drawnImageWidth) / 2;
+            var imageY = currentY;
+            ctx.drawImage(image, imageX, imageY, drawnImageWidth, drawnImageHeight);
+
+            if (skuText) {
+                ctx.fillStyle = '#111111';
+                ctx.font = '24px Arial';
+                ctx.fillText(skuText, cardWidth / 2, imageY + drawnImageHeight + 24);
+            }
 
             callback(canvas.toDataURL('image/png'));
         };
@@ -103,17 +148,45 @@ $(document).ready(function() {
         image.src = imageSrc;
     }
 
+    function openCodePrintWindow(imageSrc, productName, priceValue, codeValue) {
+        if (!imageSrc) {
+            return;
+        }
+
+        buildCodeCardDataUrl(imageSrc, productName, priceValue, codeValue, function(cardDataUrl) {
+            var printWindow = window.open('', '_blank', 'width=900,height=700');
+            if (!printWindow) {
+                toastr.error('Please allow popups to print the code.');
+                return;
+            }
+
+            var safeTitle = escapeHtml(productName || 'Product Code');
+
+            printWindow.document.open();
+            printWindow.document.write(
+                '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + safeTitle + '</title>' +
+                '<style>body{margin:0;padding:24px;background:#eef2f7;font-family:Arial,sans-serif;text-align:center}img{max-width:100%;height:auto;box-shadow:0 18px 46px rgba(15,23,42,.12)}</style>' +
+                '</head><body><img src="' + cardDataUrl + '" alt="' + safeTitle + '"></body></html>'
+            );
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+        });
+    }
+
     function renderProductCodePreview(config) {
         var emptyHtml = '<small class="text-muted">' + config.emptyMessage + '</small>';
         var html = emptyHtml;
 
         if (config.imageSrc) {
-            html = '<div class="code-preview-block">' +
-                '<img src="' + config.imageSrc + '" alt="' + escapeHtml(config.altText) + '" style="max-width: 100%;">' +
-                '<div class="small text-muted" style="margin-top:8px;"><strong>Selling Price:</strong> ' + escapeHtml(config.priceValue || '--') + '</div>' +
+            html = '<div class="code-preview-block" style="border:2px solid #243b53;border-radius:18px;background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);padding:12px 10px;">' +
+                '<div style="font-size:16px;font-weight:800;color:#1d3557;line-height:1.1;text-transform:uppercase;">' + escapeHtml(config.productName || 'Product') + '</div>' +
+                '<div style="font-size:16px;color:#111111;margin-top:8px;"><span style="font-weight:500;">Price:</span> <strong>' + escapeHtml(config.priceValue || '--') + '</strong></div>' +
+                '<div style="margin-top:12px;"><img src="' + config.imageSrc + '" alt="' + escapeHtml(config.altText) + '" style="max-width: 100%;"></div>' +
+                (config.codeValue ? '<div class="small" style="margin-top:8px;color:#111111;word-break:break-all;">' + escapeHtml(config.codeValue) + '</div>' : '') +
                 '<div class="btn-group btn-group-xs" style="margin-top:8px;">' +
-                '<button type="button" class="btn btn-default js-download-generated-code" data-image-src="' + config.imageSrc + '" data-title="' + escapeHtml(config.altText) + '" data-price-value="' + escapeHtml(config.priceValue || '--') + '" data-download-name="' + escapeHtml(config.downloadName) + '"><i class="fa fa-download"></i> Download</button>' +
-                '<button type="button" class="btn btn-default js-print-generated-code" data-image-src="' + config.imageSrc + '" data-title="' + escapeHtml(config.altText) + '" data-price-value="' + escapeHtml(config.priceValue || '--') + '"><i class="fa fa-print"></i> Print</button>' +
+                '<button type="button" class="btn btn-default js-download-generated-code" data-image-src="' + config.imageSrc + '" data-product-name="' + escapeHtml(config.productName || 'Product') + '" data-code-value="' + escapeHtml(config.codeValue || '') + '" data-price-value="' + escapeHtml(config.priceValue || '--') + '" data-download-name="' + escapeHtml(config.downloadName) + '"><i class="fa fa-download"></i> Download</button>' +
+                '<button type="button" class="btn btn-default js-print-generated-code" data-image-src="' + config.imageSrc + '" data-product-name="' + escapeHtml(config.productName || 'Product') + '" data-code-value="' + escapeHtml(config.codeValue || '') + '" data-price-value="' + escapeHtml(config.priceValue || '--') + '"><i class="fa fa-print"></i> Print</button>' +
                 '</div>' +
                 '</div>';
         }
@@ -152,6 +225,7 @@ $(document).ready(function() {
                 }
 
                 var currentPrice = resolveCurrentCodePrice();
+                var currentProductName = resolveCurrentProductName();
                 var skuForFileName = sanitizeFileName(response.sku, 'product_code');
 
                 renderProductCodePreview({
@@ -160,6 +234,7 @@ $(document).ready(function() {
                     emptyMessage: 'No barcode yet',
                     altText: 'Barcode preview',
                     codeValue: response.barcode || $('#barcode').val(),
+                    productName: currentProductName,
                     priceValue: currentPrice,
                     downloadName: 'barcode_' + skuForFileName + '.png',
                 });
@@ -169,6 +244,7 @@ $(document).ready(function() {
                     emptyMessage: 'No QR yet',
                     altText: 'QR preview',
                     codeValue: response.qr_code_value || $('#qr_code_value').val(),
+                    productName: currentProductName,
                     priceValue: currentPrice,
                     downloadName: 'qrcode_' + skuForFileName + '.png',
                 });
@@ -448,8 +524,9 @@ $(document).ready(function() {
         var button = $(this);
         openCodePrintWindow(
             button.attr('data-image-src'),
-            button.attr('data-title'),
-            button.attr('data-price-value')
+            button.attr('data-product-name'),
+            button.attr('data-price-value'),
+            button.attr('data-code-value')
         );
     });
 
@@ -458,8 +535,9 @@ $(document).ready(function() {
         var button = $(this);
         buildCodeCardDataUrl(
             button.attr('data-image-src'),
-            button.attr('data-title'),
+            button.attr('data-product-name'),
             button.attr('data-price-value'),
+            button.attr('data-code-value'),
             function(cardDataUrl) {
                 var link = document.createElement('a');
                 link.href = cardDataUrl;

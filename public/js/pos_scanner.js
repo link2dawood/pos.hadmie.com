@@ -78,7 +78,7 @@
             },
             success: function(result) {
                 if (result.success) {
-                    var addedToCart = pos_product_row(result.variation_id, null, null, result.quantity || 1, {
+                    var addedToCart = pos_product_row(result.variation_id, null, result.match_type === 'weighing_scale' ? trimmedCode : null, result.quantity || 1, {
                         forceIncrementExisting: true,
                         focusSelector: '#search_product',
                         suppressErrorToast: true,
@@ -173,6 +173,23 @@
                 });
         }
 
+        function supportedCameraFormats() {
+            if (typeof Html5QrcodeSupportedFormats === 'undefined') {
+                return [];
+            }
+
+            return [
+                Html5QrcodeSupportedFormats.QR_CODE,
+                Html5QrcodeSupportedFormats.CODE_128,
+                Html5QrcodeSupportedFormats.CODE_39,
+                Html5QrcodeSupportedFormats.EAN_13,
+                Html5QrcodeSupportedFormats.EAN_8,
+                Html5QrcodeSupportedFormats.UPC_A,
+                Html5QrcodeSupportedFormats.UPC_E,
+                Html5QrcodeSupportedFormats.ITF,
+            ];
+        }
+
         function startCameraScan() {
             if (
                 typeof Html5Qrcode === 'undefined' ||
@@ -186,14 +203,20 @@
 
             scannerStatus('Requesting camera permission...', 'info');
             html5QrCode = new Html5Qrcode('pos_camera_reader');
+            var cameraConfig = {
+                fps: 10,
+                qrbox: { width: 220, height: 220 },
+            };
+            var formats = supportedCameraFormats();
+
+            if (formats.length) {
+                cameraConfig.formatsToSupport = formats;
+            }
 
             html5QrCode
                 .start(
                     { facingMode: 'environment' },
-                    {
-                        fps: 10,
-                        qrbox: { width: 220, height: 220 },
-                    },
+                    cameraConfig,
                     function(decodedText) {
                         scannerStatus('Code detected. Adding product...', 'success');
                         stopCameraScan().then(function() {
