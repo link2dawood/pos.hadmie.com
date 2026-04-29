@@ -164,9 +164,15 @@
                     return null;
                 })
                 .then(function() {
-                    return html5QrCode.clear().catch(function() {
-                        return null;
-                    });
+                    try {
+                        var clearResult = html5QrCode.clear();
+                        if (clearResult && typeof clearResult.catch === 'function') {
+                            return clearResult.catch(function() { return null; });
+                        }
+                    } catch (e) {
+                        // clear() not available or failed — safe to ignore
+                    }
+                    return null;
                 })
                 .then(function() {
                     html5QrCode = null;
