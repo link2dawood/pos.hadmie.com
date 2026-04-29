@@ -15,12 +15,15 @@
 	    			: ($product->qr_code_value ?? $product->sku);
 	    		$barcode_scan_value = !empty($product->barcode) ? $product->barcode : $qr_scan_value;
 
-	    		$barcode_data_uri = !empty($barcode_scan_value)
-	    			? 'data:image/png;base64,' . DNS1D::getBarcodePNG($barcode_scan_value, $product->barcode_type ?: 'C128', 2, 60, [17, 24, 39], true)
-	    			: null;
-	    		$qr_data_uri = !empty($qr_scan_value)
-	    			? 'data:image/png;base64,' . DNS2D::getBarcodePNG($qr_scan_value, 'QRCODE', 4, 4, [17, 24, 39])
-	    			: null;
+	    		$_barcode_b64 = !empty($barcode_scan_value)
+	    			? DNS1D::getBarcodePNG($barcode_scan_value, $product->barcode_type ?: 'C128', 2, 60, [17, 24, 39], true)
+	    			: false;
+	    		$barcode_data_uri = !empty($_barcode_b64) ? 'data:image/png;base64,' . $_barcode_b64 : null;
+
+	    		$_qr_b64 = !empty($qr_scan_value)
+	    			? DNS2D::getBarcodePNG($qr_scan_value, 'QRCODE', 4, 4, [17, 24, 39])
+	    			: false;
+	    		$qr_data_uri = !empty($_qr_b64) ? 'data:image/png;base64,' . $_qr_b64 : null;
 	    		$download_safe_sku = preg_replace('/[^A-Za-z0-9._-]+/', '_', $product->sku ?? ('product_'.$product->id));
 
 	    		// Pre-format price with currency so the printed/downloaded card matches the label design

@@ -143,34 +143,57 @@ $(document).ready(function() {
             callback(canvas.toDataURL('image/png'));
         };
         image.onerror = function() {
-            callback(imageSrc);
+            // Image failed — draw the card with a text placeholder so name/price still print
+            var canvas = document.createElement('canvas');
+            var ctx = canvas.getContext('2d');
+            var padding = 32;
+            var cardWidth = 760;
+            var name = String(productName || 'Product').toUpperCase();
+            ctx.font = 'bold 30px Arial';
+            var titleLines = wrapCanvasText(ctx, name, cardWidth - padding * 2);
+            var cardHeight = padding + (titleLines.length * 38) + 8 + 34 + 60 + padding;
+            canvas.width = cardWidth;
+            canvas.height = cardHeight;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, cardWidth, cardHeight);
+            ctx.strokeStyle = '#243b53';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(10, 10, cardWidth - 20, cardHeight - 20);
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#1d3557';
+            ctx.font = 'bold 30px Arial';
+            var y = padding + 28;
+            titleLines.forEach(function(line) { ctx.fillText(line, cardWidth / 2, y); y += 38; });
+            ctx.fillStyle = '#111111';
+            ctx.font = '28px Arial';
+            ctx.fillText('Price: ' + (priceValue || '--'), cardWidth / 2, y);
+            y += 34;
+            ctx.fillStyle = '#888888';
+            ctx.font = '20px Arial';
+            ctx.fillText($.trim(codeValue || ''), cardWidth / 2, y);
+            callback(canvas.toDataURL('image/png'));
         };
         image.src = imageSrc;
     }
 
-    function openCodePrintWindow(imageSrc, productName, priceValue, codeValue) {
-        if (!imageSrc) {
+    function openCodePrintWindow(printWindow, imageSrc, productName, priceValue, codeValue) {
+        if (!printWindow || !imageSrc) {
             return;
         }
 
+        var safeTitle = escapeHtml(productName || 'Product Code');
+
         buildCodeCardDataUrl(imageSrc, productName, priceValue, codeValue, function(cardDataUrl) {
-            var printWindow = window.open('', '_blank', 'width=900,height=700');
-            if (!printWindow) {
-                toastr.error('Please allow popups to print the code.');
-                return;
-            }
-
-            var safeTitle = escapeHtml(productName || 'Product Code');
-
+            // Use onload on the img so print() fires only after the image is rendered
             printWindow.document.open();
             printWindow.document.write(
                 '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + safeTitle + '</title>' +
-                '<style>body{margin:0;padding:24px;background:#eef2f7;font-family:Arial,sans-serif;text-align:center}img{max-width:100%;height:auto;box-shadow:0 18px 46px rgba(15,23,42,.12)}</style>' +
-                '</head><body><img src="' + cardDataUrl + '" alt="' + safeTitle + '"></body></html>'
+                '<style>body{margin:0;padding:24px;background:#eef2f7;font-family:Arial,sans-serif;text-align:center}' +
+                'img{max-width:100%;height:auto;box-shadow:0 18px 46px rgba(15,23,42,.12)}</style>' +
+                '</head><body><img src="' + cardDataUrl + '" alt="' + safeTitle + '" onload="window.print()"></body></html>'
             );
             printWindow.document.close();
             printWindow.focus();
-            printWindow.print();
         });
     }
 
@@ -522,7 +545,15 @@ $(document).ready(function() {
     $(document).on('click', '.js-print-generated-code', function(e) {
         e.preventDefault();
         var button = $(this);
+        // Open the popup NOW (inside the click handler = user-gesture context) so popup
+        // blockers don't interfere. The window is populated asynchronously after.
+        var printWindow = window.open('', '_blank', 'width=900,height=700');
+        if (!printWindow) {
+            toastr.error('Please allow popups to print the code.');
+            return;
+        }
         openCodePrintWindow(
+            printWindow,
             button.attr('data-image-src'),
             button.attr('data-product-name'),
             button.attr('data-price-value'),
