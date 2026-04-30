@@ -26,17 +26,27 @@
         $barcode_type = 'C128';
     }
 
-    // Generate barcode PNG safely; on any remaining failure, set to null so we skip the img tag.
+    // Generate barcode PNG safely; catch both \Exception and PHP 8 \Error/\TypeError via \Throwable.
     $barcode_img = null;
     if (!empty($barcode_value)) {
         try {
             $barcode_img = DNS1D::getBarcodePNG($barcode_value, $barcode_type, 3, 150, [0, 0, 0], false);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             try {
                 $barcode_img = DNS1D::getBarcodePNG($barcode_value, 'C128', 3, 150, [0, 0, 0], false);
-            } catch (\Exception $e2) {
+            } catch (\Throwable $e2) {
                 $barcode_img = null;
             }
+        }
+    }
+
+    // Generate QR PNG safely.
+    $qr_img = null;
+    if (!empty($qr_value)) {
+        try {
+            $qr_img = DNS2D::getBarcodePNG($qr_value, 'QRCODE', 6, 6, [0, 0, 0]);
+        } catch (\Throwable $e) {
+            $qr_img = null;
         }
     }
 @endphp
@@ -100,11 +110,11 @@
         @endforeach
 
         <div class="label-card__codes @if($show_barcode && $show_qr) label-card__codes--both @endif">
-            @if($show_qr && !empty($qr_value))
+            @if($show_qr && !empty($qr_value) && $qr_img)
                 <div class="label-card__code label-card__code--qr">
                     <img
                         class="label-card__qr-image"
-                        src="data:image/png;base64,{{ DNS2D::getBarcodePNG($qr_value, 'QRCODE', 6, 6, [0, 0, 0]) }}"
+                        src="data:image/png;base64,{{ $qr_img }}"
                         alt="QR code">
                     <div class="label-card__code-text">{{ $qr_value }}</div>
                 </div>

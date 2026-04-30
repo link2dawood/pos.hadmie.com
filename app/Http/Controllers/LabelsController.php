@@ -185,7 +185,7 @@ class LabelsController extends Controller
                 'margin_top' => $margin_top,
                 'margin_left' => $margin_left,
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \Log::emergency('File:'.$e->getFile().'Line:'.$e->getLine().'Message:'.$e->getMessage());
 
             return response(__('lang_v1.barcode_label_error'), 500);
