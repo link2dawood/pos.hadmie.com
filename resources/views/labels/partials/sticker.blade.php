@@ -17,6 +17,28 @@
     $formatted_price = $print['price_type'] === 'exclusive'
         ? @num_format($page_product->default_sell_price)
         : @num_format($page_product->sell_price_inc_tax);
+
+    // Numeric-only types (EAN, UPC, etc.) throw if the SKU has letters/hyphens.
+    // Fall back to C128 which encodes any printable ASCII safely.
+    $barcode_type = $page_product->barcode_type ?: 'C128';
+    $digit_only_types = ['EAN8','EAN13','UPCA','UPCE','I25','I25+','S25','S25+','MSI','MSI+','POSTNET','PLANET','CODE11'];
+    if (!empty($barcode_value) && in_array($barcode_type, $digit_only_types) && !ctype_digit($barcode_value)) {
+        $barcode_type = 'C128';
+    }
+
+    // Generate barcode PNG safely; on any remaining failure, set to null so we skip the img tag.
+    $barcode_img = null;
+    if (!empty($barcode_value)) {
+        try {
+            $barcode_img = DNS1D::getBarcodePNG($barcode_value, $barcode_type, 3, 150, [0, 0, 0], false);
+        } catch (\Exception $e) {
+            try {
+                $barcode_img = DNS1D::getBarcodePNG($barcode_value, 'C128', 3, 150, [0, 0, 0], false);
+            } catch (\Exception $e2) {
+                $barcode_img = null;
+            }
+        }
+    }
 @endphp
 
 <div class="label-card">
@@ -88,11 +110,11 @@
                 </div>
             @endif
 
-            @if($show_barcode && !empty($barcode_value))
+            @if($show_barcode && !empty($barcode_value) && $barcode_img)
                 <div class="label-card__code label-card__code--barcode">
                     <img
                         class="label-card__barcode-image"
-                        src="data:image/png;base64,{{ DNS1D::getBarcodePNG($barcode_value, $page_product->barcode_type ?: 'C128', 3, 150, [0, 0, 0], false) }}"
+                        src="data:image/png;base64,{{ $barcode_img }}"
                         alt="Barcode">
                     <div class="label-card__code-text">{{ $barcode_value }}</div>
                 </div>
