@@ -14,9 +14,10 @@
 
     $barcode_value = !empty($page_product->sub_sku) ? $page_product->sub_sku : ($page_product->barcode ?: $page_product->qr_code_value);
     $qr_value = !empty($page_product->sub_sku) ? $page_product->sub_sku : ($page_product->qr_code_value ?: $page_product->barcode);
-    $formatted_price = $print['price_type'] === 'exclusive'
-        ? @num_format($page_product->default_sell_price)
-        : @num_format($page_product->sell_price_inc_tax);
+    $raw_price = $print['price_type'] === 'exclusive'
+        ? (float) ($page_product->default_sell_price ?? 0)
+        : (float) ($page_product->sell_price_inc_tax ?? 0);
+    $formatted_price = function_exists('num_format') ? num_format($raw_price) : number_format($raw_price, 2);
 
     // Numeric-only types (EAN, UPC, etc.) throw if the SKU has letters/hyphens.
     // Fall back to C128 which encodes any printable ASCII safely.
