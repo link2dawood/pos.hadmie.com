@@ -284,38 +284,46 @@
 
         .label-card__codes {
             margin-top: 4px;
-            flex: 1 1 auto;
+            flex: 1 1 0;
             display: flex;
+            flex-direction: row;
             align-items: center;
             justify-content: center;
             gap: 6px;
             min-height: 0;
+            overflow: hidden;
         }
 
         .label-card__codes--both { align-items: stretch; }
 
         .label-card__code {
             display: flex;
-            flex: 1 1 auto;
+            flex: 1 1 100%;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             min-width: 0;
+            min-height: 0;
         }
 
-        .label-card__code--barcode { justify-content: center; }
+        /* Barcode: always fill full width, fixed height — object-fit:fill
+           stretches bars to span the label width regardless of SKU length.
+           Bar proportions shift slightly but scanners are tolerant. */
+        .label-card__barcode-image {
+            display: block;
+            width: 100%;
+            height: calc({{ $barcode_details->height }}in * 0.52);
+            object-fit: fill;
+        }
 
+        /* QR must stay square — contain preserves ratio */
         .label-card__qr-image {
+            display: block;
+            height: calc({{ $barcode_details->height }}in * 0.58);
             width: auto;
             max-width: 100%;
-            max-height: calc({{ $barcode_details->height }}in * 0.58);
-        }
-
-        .label-card__barcode-image {
-            width: 100%;
-            max-width: 100%;
-            max-height: calc({{ $barcode_details->height }}in * 0.52);
             object-fit: contain;
+            margin: 0 auto;
         }
 
         .label-card__code-text {
