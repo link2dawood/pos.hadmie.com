@@ -82,11 +82,9 @@
                 <div class="label-card__code label-card__code--qr">
                     <img
                         class="label-card__qr-image"
-                        src="data:image/png;base64,{{ DNS2D::getBarcodePNG($qr_value, 'QRCODE', 5, 5, [0, 0, 0]) }}"
+                        src="data:image/png;base64,{{ DNS2D::getBarcodePNG($qr_value, 'QRCODE', 6, 6, [0, 0, 0]) }}"
                         alt="QR code">
-                    @if($show_qr_text)
-                        <div class="label-card__code-text">{{ $qr_value }}</div>
-                    @endif
+                    <div class="label-card__code-text">{{ $qr_value }}</div>
                 </div>
             @endif
 
@@ -94,11 +92,9 @@
                 <div class="label-card__code label-card__code--barcode">
                     <img
                         class="label-card__barcode-image"
-                        src="data:image/png;base64,{{ DNS1D::getBarcodePNG($barcode_value, $page_product->barcode_type ?: 'C128', 2, 60, [0, 0, 0], false) }}"
+                        src="data:image/png;base64,{{ DNS1D::getBarcodePNG($barcode_value, $page_product->barcode_type ?: 'C128', 2, 100, [0, 0, 0], false) }}"
                         alt="Barcode">
-                    @if($show_barcode_text)
-                        <div class="label-card__code-text">{{ $barcode_value }}</div>
-                    @endif
+                    <div class="label-card__code-text">{{ $barcode_value }}</div>
                 </div>
             @endif
         </div>
