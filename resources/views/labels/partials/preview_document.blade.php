@@ -289,7 +289,7 @@
             flex-direction: row;
             align-items: center;
             justify-content: center;
-            gap: 6px;
+            gap: 12px;
             min-height: 0;
             overflow: hidden;
         }
@@ -298,7 +298,8 @@
 
         .label-card__code {
             display: flex;
-            flex: 1 1 100%;
+            flex: 1 1 50%;
+            width: 100%;
             flex-direction: column;
             align-items: center;
             justify-content: center;
@@ -306,24 +307,27 @@
             min-height: 0;
         }
 
-        /* Barcode: always fill full width, fixed height — object-fit:fill
-           stretches bars to span the label width regardless of SKU length.
-           Bar proportions shift slightly but scanners are tolerant. */
+        /* Barcode: stretch width, fixed height */
         .label-card__barcode-image {
             display: block;
             width: 100%;
-            height: calc({{ $barcode_details->height }}in * 0.52);
+            height: calc({{ $barcode_details->height }}in * 0.45);
             object-fit: fill;
         }
 
-        /* QR must stay square — contain preserves ratio */
+        /* QR Code: MUST be square to scan properly */
         .label-card__qr-image {
             display: block;
-            height: calc({{ $barcode_details->height }}in * 0.58);
+            height: calc({{ $barcode_details->height }}in * 0.45);
             width: auto;
             max-width: 100%;
             object-fit: contain;
             margin: 0 auto;
+        }
+
+        .label-card__codes--both .label-card__barcode-image,
+        .label-card__codes--both .label-card__qr-image {
+            height: calc({{ $barcode_details->height }}in * 0.35);
         }
 
         .label-card__code-text {
