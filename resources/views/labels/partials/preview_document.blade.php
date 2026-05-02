@@ -127,13 +127,12 @@
             50%       { opacity: 0.6; box-shadow: 0 0 0 6px rgba(52,211,153,0);   }
         }
 
-        .studio-print-btn {
+        .studio-print-btn,
+        .studio-download-btn {
             display: inline-flex;
             align-items: center;
             gap: 9px;
             padding: 11px 26px;
-            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
-            color: #1a0e00;
             font-family: 'Outfit', sans-serif;
             font-size: 13px;
             font-weight: 800;
@@ -142,9 +141,21 @@
             border: none;
             border-radius: 100px;
             cursor: pointer;
-            box-shadow: 0 4px 20px var(--gold-glow), inset 0 1px 0 rgba(255,255,255,0.25);
             transition: transform 0.14s cubic-bezier(.34,1.56,.64,1), box-shadow 0.25s ease;
+        }
+
+        .studio-print-btn {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+            color: #1a0e00;
+            box-shadow: 0 4px 20px var(--gold-glow), inset 0 1px 0 rgba(255,255,255,0.25);
             animation: btn-glow 3.5s ease-in-out infinite;
+        }
+
+        .studio-download-btn {
+            background: rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.88);
+            border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
 
         .studio-print-btn:hover {
@@ -153,10 +164,19 @@
             animation: none;
         }
 
-        .studio-print-btn:active {
-            transform: scale(0.97) translateY(0);
-            box-shadow: 0 2px 10px var(--gold-glow);
+        .studio-download-btn:hover {
+            transform: translateY(-2px) scale(1.01);
+            background: rgba(255,255,255,0.13);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.3);
         }
+
+        .studio-print-btn:active,
+        .studio-download-btn:active {
+            transform: scale(0.97) translateY(0);
+        }
+
+        .studio-print-btn:active  { box-shadow: 0 2px 10px var(--gold-glow); }
+        .studio-download-btn:active { box-shadow: 0 1px 6px rgba(0,0,0,0.2); }
 
         @keyframes btn-glow {
             0%, 100% { box-shadow: 0 4px 20px rgba(201,146,42,0.3), inset 0 1px 0 rgba(255,255,255,0.2); }
@@ -304,13 +324,15 @@
             min-height: 0;
         }
 
-        /* Wrapper div takes the flex space reliably (divs respect flex-grow, img does not).
-           The img is then positioned absolutely inside to fill 100% of the wrapper. */
+        /* Wrapper takes flex space; JS overrides with explicit px height after layout.
+           We keep flex:1 1 0 so the wrapper grows in CSS-only renders (print),
+           but JS will replace it with a measured height for screen rendering. */
         .label-card__img-wrap {
             position: relative;
             flex: 1 1 0;
-            min-height: 0;
+            min-height: 4px;
             width: 100%;
+            overflow: hidden;
         }
 
         .label-card__qr-image,
@@ -400,6 +422,17 @@
                 Ready to Print
             </div>
 
+            <button class="studio-download-btn" type="button" onclick="downloadPDF()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                     fill="none" stroke="currentColor" stroke-width="2.2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Download PDF
+            </button>
+
             <button class="studio-print-btn" type="button" onclick="window.print()">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                      fill="none" stroke="currentColor" stroke-width="2.2"
@@ -417,6 +450,51 @@
     <div class="label-preview">
         {!! $pages_html !!}
     </div>
+
+    <script>
+        /* ── Fix QR/barcode image wrapper heights ─────────────────────
+           position:absolute children need a non-zero parent height.
+           flex:1 alone is unreliable when all children are out-of-flow,
+           so we measure each .label-card__code and set explicit px height
+           on its .label-card__img-wrap after layout settles. */
+        function fixImgWrapHeights() {
+            document.querySelectorAll('.label-card__code').forEach(function(code) {
+                var wrap = code.querySelector('.label-card__img-wrap');
+                if (!wrap) return;
+
+                var codeRect  = code.getBoundingClientRect();
+                var textEl    = code.querySelector('.label-card__code-text');
+                var textH     = textEl ? (textEl.getBoundingClientRect().height + 3) : 0;
+                var wrapH     = Math.max(0, codeRect.height - textH);
+
+                if (wrapH > 0) {
+                    wrap.style.position = 'relative';
+                    wrap.style.height   = wrapH + 'px';
+                    wrap.style.flex     = 'none';
+                }
+            });
+        }
+
+        /* Run after paint so CSS layout is fully resolved. */
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                requestAnimationFrame(function() { setTimeout(fixImgWrapHeights, 60); });
+            });
+        } else {
+            requestAnimationFrame(function() { setTimeout(fixImgWrapHeights, 60); });
+        }
+
+        /* ── Download PDF ─────────────────────────────────────────────
+           Browsers expose "Save as PDF" as a print destination.
+           We switch the page title temporarily so the saved file name
+           matches the label content rather than the URL. */
+        function downloadPDF() {
+            var prev = document.title;
+            document.title = 'labels';
+            window.print();
+            document.title = prev;
+        }
+    </script>
 
 </body>
 </html>
