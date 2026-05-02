@@ -234,17 +234,21 @@
 
         /* ── Label card styles (shared partial) ─────────────────────── */
 
-        /* ── Print overrides ────────────────────────────────────────── */
         @media print {
-            body {
+            body, html {
                 background: #ffffff !important;
                 background-image: none !important;
+                min-height: 0 !important;
+                height: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
 
             .studio-bar { display: none !important; }
 
             .label-preview {
-                padding: 0;
+                padding: 0 !important;
+                margin: 0 !important;
                 gap: 0;
                 display: block;
             }
@@ -252,10 +256,29 @@
             .label-sheet {
                 box-shadow: none;
                 border-radius: 0;
-                padding: 0;
+                padding: 0 !important;
                 animation: none;
                 max-width: none !important;
                 width: {{ $paper_width }}in !important;
+                margin: 0 !important;
+                overflow: hidden !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+            
+            .label-sheet__table {
+                border-collapse: collapse !important;
+                border-spacing: 0 !important;
+                margin: 0 !important;
+            }
+            
+            .label-sheet__cell {
+                padding: 0 !important;
+            }
+
+            .label-card {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
                 margin: 0 !important;
             }
         }
