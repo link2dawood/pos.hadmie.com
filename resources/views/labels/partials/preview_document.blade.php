@@ -216,7 +216,7 @@
         .label-card {
             width: {{ $barcode_details->width }}in;
             height: {{ $barcode_details->height }}in;
-            padding: 0.05in;
+            padding: 0.03in;
             display: flex;
             align-items: stretch;
             justify-content: center;
@@ -226,9 +226,9 @@
             width: 100%;
             height: 100%;
             border: 2.5px solid var(--label-border);
-            border-radius: 18px;
+            border-radius: 14px;
             background: #ffffff;
-            padding: 0.07in 0.1in 0.06in;
+            padding: 0.05in 0.07in 0.04in;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -284,45 +284,37 @@
         .label-card__price-value { font-weight: 700; }
 
         .label-card__codes {
-            margin-top: 6px;
+            margin-top: 4px;
             flex: 1 1 0;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
+            align-items: stretch;
+            gap: 4px;
             min-height: 0;
             overflow: hidden;
             width: 100%;
         }
 
-        .label-card__codes--both { align-items: stretch; }
-
         .label-card__code {
             display: flex;
-            flex: 1 1 100%;
+            flex: 1 1 0;
             width: 100%;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            align-items: stretch;
             min-width: 0;
             min-height: 0;
         }
 
-        /* Barcode: stretch width, fixed height */
-        .label-card__barcode-image {
-            display: block;
-            width: 100%;
-            flex: 1;
-            min-height: 0;
-            object-fit: fill;
-        }
-
-        /* QR Code (PDF417): always render as a wide rectangle regardless of barcode value length */
+        /* Both barcode and QR: fill the available code area completely.
+           On a landscape label (wider than tall), the remaining height after
+           text fields is always much less than the width — producing a natural
+           wide rectangle without any forced aspect-ratio tricks. */
+        .label-card__barcode-image,
         .label-card__qr-image {
             display: block;
             width: 100%;
-            aspect-ratio: 4 / 1;
+            flex: 1 1 0;
+            min-height: 0;
             object-fit: fill;
         }
 
