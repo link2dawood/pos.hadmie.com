@@ -318,13 +318,12 @@
             object-fit: fill;
         }
 
-        /* QR Code: stretched to match the user's explicit pixel-perfect request */
+        /* QR Code (PDF417): preserve natural rectangular aspect ratio — wide and short */
         .label-card__qr-image {
             display: block;
             width: 100%;
-            flex: 1;
-            min-height: 0;
-            object-fit: fill;
+            height: auto;
+            object-fit: contain;
         }
 
         .label-card__code-text {
