@@ -305,16 +305,24 @@
             min-height: 0;
         }
 
-        /* object-fit:contain preserves the image's aspect ratio so bar widths
-           are never horizontally stretched — critical for scanner readability. */
-        .label-card__barcode-image,
-        .label-card__qr-image {
+        /* Barcode: contain preserves bar widths — horizontal distortion breaks scanning. */
+        .label-card__barcode-image {
             display: block;
             width: 100%;
             flex: 1 1 0;
             min-height: 0;
             object-fit: contain;
             object-position: center;
+        }
+
+        /* QR code: fill stretches the square QR to fill the rectangular label space,
+           matching the reference design. QRCODE,M error correction tolerates stretching. */
+        .label-card__qr-image {
+            display: block;
+            width: 100%;
+            flex: 1 1 0;
+            min-height: 0;
+            object-fit: fill;
         }
 
         .label-card__code-text {

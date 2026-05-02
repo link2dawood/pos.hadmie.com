@@ -21,7 +21,7 @@
 	    		$barcode_data_uri = !empty($_barcode_b64) ? 'data:image/png;base64,' . $_barcode_b64 : null;
 
 	    		$_qr_b64 = !empty($qr_scan_value)
-	    			? DNS2D::getBarcodePNG($qr_scan_value, 'PDF417,4', 3, 6, [17, 24, 39])
+	    			? DNS2D::getBarcodePNG($qr_scan_value, 'QRCODE,M', 6, 6, [17, 24, 39])
 	    			: false;
 	    		$qr_data_uri = !empty($_qr_b64) ? 'data:image/png;base64,' . $_qr_b64 : null;
 	    		$download_safe_sku = preg_replace('/[^A-Za-z0-9._-]+/', '_', $product->sku ?? ('product_'.$product->id));
@@ -74,7 +74,7 @@
 						<b>QR value:</b>
 						{{$product->qr_code_value ?? '--' }}<br>
 						@if(!empty($qr_data_uri))
-							<img src="{{ $qr_data_uri }}" alt="QR code" style="max-width:100%; width:220px; display:block; margin-top:4px;">
+							<img src="{{ $qr_data_uri }}" alt="QR code" style="max-width:120px; display:block; margin-top:4px;">
 							<small class="text-muted" style="display:block;">
 								<strong>Selling Price:</strong>
 								@if(!is_null($code_price_value))
