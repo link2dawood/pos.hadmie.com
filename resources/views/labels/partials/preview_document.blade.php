@@ -300,30 +300,33 @@
             flex: 1 1 0;
             width: 100%;
             flex-direction: column;
-            align-items: stretch;
             min-width: 0;
             min-height: 0;
         }
 
-        /* Barcode: contain preserves bar widths — horizontal distortion breaks scanning. */
-        .label-card__barcode-image {
-            display: block;
-            width: 100%;
+        /* Wrapper div takes the flex space reliably (divs respect flex-grow, img does not).
+           The img is then positioned absolutely inside to fill 100% of the wrapper. */
+        .label-card__img-wrap {
+            position: relative;
             flex: 1 1 0;
             min-height: 0;
-            object-fit: contain;
-            object-position: center;
+            width: 100%;
         }
 
-        /* QR code: fill stretches the square QR to fill the rectangular label space,
-           matching the reference design. QRCODE,M error correction tolerates stretching. */
-        .label-card__qr-image {
-            display: block;
+        .label-card__qr-image,
+        .label-card__barcode-image {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            flex: 1 1 0;
-            min-height: 0;
-            object-fit: fill;
+            height: 100%;
         }
+
+        /* QR: stretch to fill the rectangular space (QRCODE,M tolerates distortion). */
+        .label-card__qr-image { object-fit: fill; }
+
+        /* Barcode: contain preserves relative bar widths — critical for scanner. */
+        .label-card__barcode-image { object-fit: contain; }
 
         .label-card__code-text {
             margin-top: 3px;
