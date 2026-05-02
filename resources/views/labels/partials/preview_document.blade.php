@@ -254,6 +254,9 @@
                 border-radius: 0;
                 padding: 0;
                 animation: none;
+                max-width: none !important;
+                width: {{ $paper_width }}in !important;
+                margin: 0 !important;
             }
         }
 
@@ -295,7 +298,7 @@
                 Ready to Print
             </div>
 
-            <button class="studio-download-btn" type="button" onclick="downloadPDF()">
+            <button class="studio-download-btn" type="button" onclick="downloadPNG()">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                      fill="none" stroke="currentColor" stroke-width="2.2"
                      stroke-linecap="round" stroke-linejoin="round">
@@ -303,7 +306,7 @@
                     <polyline points="7 10 12 15 17 10"/>
                     <line x1="12" y1="15" x2="12" y2="3"/>
                 </svg>
-                Download PDF
+                Download PNG
             </button>
 
             <button class="studio-print-btn" type="button" onclick="window.print()">
@@ -357,17 +360,33 @@
             requestAnimationFrame(function() { setTimeout(fixImgWrapHeights, 60); });
         }
 
-        /* ── Download PDF ─────────────────────────────────────────────
-           Browsers expose "Save as PDF" as a print destination.
-           We switch the page title temporarily so the saved file name
-           matches the label content rather than the URL. */
-        function downloadPDF() {
-            var prev = document.title;
+        /* ── Download PNG ───────────────────────────────────────────── */
+        function downloadPNG() {
+            var sheets = document.querySelectorAll('.label-sheet');
+            if (sheets.length === 0) return;
+
+            var originalTitle = document.title;
             document.title = 'labels';
-            window.print();
-            document.title = prev;
+
+            var promises = Array.from(sheets).map(function(sheet, index) {
+                return html2canvas(sheet, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff'
+                }).then(function(canvas) {
+                    var link = document.createElement('a');
+                    link.download = 'label-sheet-' + (index + 1) + '.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                });
+            });
+
+            Promise.all(promises).then(function() {
+                document.title = originalTitle;
+            });
         }
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 </body>
 </html>
