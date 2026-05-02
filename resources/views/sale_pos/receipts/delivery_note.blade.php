@@ -174,7 +174,7 @@
                                         @endif
                                         @if($receipt_details->show_qr_code && !empty($receipt_details->qr_code_text))
                 <div style="margin: 0 auto; text-align: center;">
-                    <img src="data:image/png;base64,{{DNS2D::getBarcodePNG($receipt_details->qr_code_text, 'QRCODE', 3, 3, [39, 48, 54])}}" style="width: 250px; height: 250px; display: block; margin: 0 auto;">
+                    <img src="data:image/png;base64,{{DNS2D::getBarcodePNG($receipt_details->qr_code_text, 'QRCODE,M', 5, 5, [39, 48, 54])}}" style="width: 250px; height: 250px; display: block; margin: 0 auto;">
                 </div>
             @elseif(!empty($receipt_details->qr_code))
                 <div style="margin: 0 auto; text-align: center;">

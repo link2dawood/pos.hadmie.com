@@ -114,10 +114,12 @@
         <div class="label-card__codes @if($show_barcode && $show_qr) label-card__codes--both @endif">
             @if($show_qr && !empty($qr_value) && $qr_img)
                 <div class="label-card__code label-card__code--qr">
-                    <img
-                        class="label-card__qr-image"
-                        src="data:image/png;base64,{{ $qr_img }}"
-                        alt="QR code">
+                    <div class="label-card__img-wrap label-card__img-wrap--qr">
+                        <img
+                            class="label-card__qr-image"
+                            src="data:image/png;base64,{{ $qr_img }}"
+                            alt="QR code">
+                    </div>
                     @if($show_qr_text)
                         <div class="label-card__code-text">{{ $qr_value }}</div>
                     @endif
@@ -126,10 +128,12 @@
 
             @if($show_barcode && !empty($barcode_value) && $barcode_img)
                 <div class="label-card__code label-card__code--barcode">
-                    <img
-                        class="label-card__barcode-image"
-                        src="data:image/png;base64,{{ $barcode_img }}"
-                        alt="Barcode">
+                    <div class="label-card__img-wrap label-card__img-wrap--barcode">
+                        <img
+                            class="label-card__barcode-image"
+                            src="data:image/png;base64,{{ $barcode_img }}"
+                            alt="Barcode">
+                    </div>
                     @if($show_barcode_text)
                         <div class="label-card__code-text">{{ $barcode_value }}</div>
                     @endif

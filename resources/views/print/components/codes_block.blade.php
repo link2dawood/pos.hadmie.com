@@ -15,7 +15,7 @@
             @if(!empty($document['codes']['qr_image']))
                 <img src="{{ $document['codes']['qr_image'] }}" alt="QR Code" style="width: {{ $document['codes']['qr_size'] }}px; height: {{ $document['codes']['qr_size'] }}px;">
             @else
-                <img src="data:image/png;base64,{{ DNS2D::getBarcodePNG($document['codes']['qr_value'], 'QRCODE', 3, 3, [17, 24, 39]) }}" alt="QR Code" style="width: {{ $document['codes']['qr_size'] }}px; height: {{ $document['codes']['qr_size'] }}px;">
+                <img src="data:image/png;base64,{{ DNS2D::getBarcodePNG($document['codes']['qr_value'], 'QRCODE,M', 5, 5, [17, 24, 39]) }}" alt="QR Code" style="width: {{ $document['codes']['qr_size'] }}px; height: {{ $document['codes']['qr_size'] }}px;">
             @endif
             <div class="print-lines print-lines--muted" style="margin-top: 6px;">
                 @if(!empty($document['codes']['qr_value']))
