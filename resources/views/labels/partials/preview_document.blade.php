@@ -232,6 +232,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            text-align: left;
         }
 
         .label-card__business {
@@ -312,7 +313,8 @@
         .label-card__barcode-image {
             display: block;
             width: 100%;
-            height: calc({{ $barcode_details->height }}in * 0.45);
+            flex: 1;
+            min-height: 0;
             object-fit: fill;
         }
 
@@ -320,13 +322,9 @@
         .label-card__qr-image {
             display: block;
             width: 100%;
-            height: calc({{ $barcode_details->height }}in * 0.45);
+            flex: 1;
+            min-height: 0;
             object-fit: fill;
-        }
-
-        .label-card__codes--both .label-card__barcode-image,
-        .label-card__codes--both .label-card__qr-image {
-            height: calc({{ $barcode_details->height }}in * 0.22);
         }
 
         .label-card__code-text {

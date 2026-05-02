@@ -117,7 +117,9 @@
                         class="label-card__qr-image"
                         src="data:image/png;base64,{{ $qr_img }}"
                         alt="QR code">
-                    <div class="label-card__code-text">{{ $qr_value }}</div>
+                    @if($show_qr_text)
+                        <div class="label-card__code-text">{{ $qr_value }}</div>
+                    @endif
                 </div>
             @endif
 
@@ -127,7 +129,9 @@
                         class="label-card__barcode-image"
                         src="data:image/png;base64,{{ $barcode_img }}"
                         alt="Barcode">
-                    <div class="label-card__code-text">{{ $barcode_value }}</div>
+                    @if($show_barcode_text)
+                        <div class="label-card__code-text">{{ $barcode_value }}</div>
+                    @endif
                 </div>
             @endif
         </div>
