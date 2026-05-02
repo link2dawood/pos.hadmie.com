@@ -110,7 +110,7 @@ class LabelsController extends Controller
             $business_id = $request->session()->get('user.business_id');
 
             $barcode_details = Barcode::findOrFail($barcode_setting);
-            $barcode_details->stickers_in_one_sheet = $barcode_details->is_continuous ? $barcode_details->stickers_in_one_row : $barcode_details->stickers_in_one_sheet;
+            $barcode_details->stickers_in_one_sheet = $barcode_details->is_continuous ? 999999 : $barcode_details->stickers_in_one_sheet;
             $barcode_details->paper_height = $barcode_details->is_continuous ? $barcode_details->height : $barcode_details->paper_height;
             if ($barcode_details->stickers_in_one_row == 1) {
                 $barcode_details->col_distance = 0;
