@@ -242,15 +242,15 @@
             letter-spacing: 0.05em;
             text-transform: uppercase;
             line-height: 1.2;
-            font-family: 'Barlow Condensed', Arial, sans-serif;
+            font-family: 'Outfit', Arial, sans-serif;
         }
 
         .label-card__name {
             margin: 0;
             color: var(--label-accent);
-            font-family: 'Barlow Condensed', Arial, sans-serif;
-            font-weight: 900;
-            line-height: 1.05;
+            font-family: 'Outfit', Arial, sans-serif;
+            font-weight: 800;
+            line-height: 1.1;
             text-transform: uppercase;
             word-break: break-word;
             letter-spacing: 0.02em;
@@ -283,22 +283,23 @@
         .label-card__price-value { font-weight: 700; }
 
         .label-card__codes {
-            margin-top: 4px;
+            margin-top: 6px;
             flex: 1 1 0;
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: 6px;
             min-height: 0;
             overflow: hidden;
+            width: 100%;
         }
 
         .label-card__codes--both { align-items: stretch; }
 
         .label-card__code {
             display: flex;
-            flex: 1 1 50%;
+            flex: 1 1 100%;
             width: 100%;
             flex-direction: column;
             align-items: center;
@@ -315,19 +316,17 @@
             object-fit: fill;
         }
 
-        /* QR Code: MUST be square to scan properly */
+        /* QR Code: stretched to match the user's explicit pixel-perfect request */
         .label-card__qr-image {
             display: block;
+            width: 100%;
             height: calc({{ $barcode_details->height }}in * 0.45);
-            width: auto;
-            max-width: 100%;
-            object-fit: contain;
-            margin: 0 auto;
+            object-fit: fill;
         }
 
         .label-card__codes--both .label-card__barcode-image,
         .label-card__codes--both .label-card__qr-image {
-            height: calc({{ $barcode_details->height }}in * 0.35);
+            height: calc({{ $barcode_details->height }}in * 0.22);
         }
 
         .label-card__code-text {

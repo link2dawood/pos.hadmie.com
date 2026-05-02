@@ -45,7 +45,7 @@
     $qr_img = null;
     if (!empty($qr_value)) {
         try {
-            $qr_img = DNS2D::getBarcodePNG($qr_value, 'PDF417', 4, 1.5, [0, 0, 0]);
+            $qr_img = DNS2D::getBarcodePNG($qr_value, 'QRCODE', 6, 6, [0, 0, 0]);
         } catch (\Throwable $e) {
             $qr_img = null;
         }
