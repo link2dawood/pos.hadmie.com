@@ -305,17 +305,16 @@
             min-height: 0;
         }
 
-        /* Both barcode and QR: fill the available code area completely.
-           On a landscape label (wider than tall), the remaining height after
-           text fields is always much less than the width — producing a natural
-           wide rectangle without any forced aspect-ratio tricks. */
+        /* object-fit:contain preserves the image's aspect ratio so bar widths
+           are never horizontally stretched — critical for scanner readability. */
         .label-card__barcode-image,
         .label-card__qr-image {
             display: block;
             width: 100%;
             flex: 1 1 0;
             min-height: 0;
-            object-fit: fill;
+            object-fit: contain;
+            object-position: center;
         }
 
         .label-card__code-text {

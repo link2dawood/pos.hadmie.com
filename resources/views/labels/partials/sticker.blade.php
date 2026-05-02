@@ -28,24 +28,25 @@
     }
 
     // Generate barcode PNG safely; catch both \Exception and PHP 8 \Error/\TypeError via \Throwable.
+    // h=50 keeps the image flat so it fills the label width when displayed with object-fit:contain.
     $barcode_img = null;
     if (!empty($barcode_value)) {
         try {
-            $barcode_img = DNS1D::getBarcodePNG($barcode_value, $barcode_type, 3, 150, [0, 0, 0], false);
+            $barcode_img = DNS1D::getBarcodePNG($barcode_value, $barcode_type, 3, 50, [0, 0, 0], false);
         } catch (\Throwable $e) {
             try {
-                $barcode_img = DNS1D::getBarcodePNG($barcode_value, 'C128', 3, 150, [0, 0, 0], false);
+                $barcode_img = DNS1D::getBarcodePNG($barcode_value, 'C128', 3, 50, [0, 0, 0], false);
             } catch (\Throwable $e2) {
                 $barcode_img = null;
             }
         }
     }
 
-    // Generate QR PNG safely — PDF417 is natively wide; CSS aspect-ratio forces the rectangle.
+    // PDF417,4 targets a 4:1 width-to-height aspect ratio — naturally rectangular.
     $qr_img = null;
     if (!empty($qr_value)) {
         try {
-            $qr_img = DNS2D::getBarcodePNG($qr_value, 'PDF417', 3, 3, [0, 0, 0]);
+            $qr_img = DNS2D::getBarcodePNG($qr_value, 'PDF417,4', 3, 6, [0, 0, 0]);
         } catch (\Throwable $e) {
             $qr_img = null;
         }

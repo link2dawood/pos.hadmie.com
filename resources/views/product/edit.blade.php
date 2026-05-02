@@ -90,7 +90,7 @@
                     <strong>QR preview</strong>
                     <div class="js-product-qr-preview" style="margin-top: 10px;">
                       @if(!empty($product->qr_code_value))
-                        <img src="data:image/png;base64,{{ DNS2D::getBarcodePNG($product->qr_code_value, 'QRCODE', 6, 6, [17, 24, 39]) }}" alt="QR code" style="max-width: 100%;">
+                        <img src="data:image/png;base64,{{ DNS2D::getBarcodePNG($product->qr_code_value, 'PDF417,4', 3, 6, [17, 24, 39]) }}" alt="QR code" style="max-width: 100%;">
                       @else
                         <small class="text-muted">No QR yet</small>
                       @endif
