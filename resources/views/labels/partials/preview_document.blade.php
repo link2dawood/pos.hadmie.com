@@ -232,135 +232,7 @@
             vertical-align: middle;
         }
 
-        /* ── Label card ────────────────────────────────────────────── */
-        .label-card {
-            width: {{ $barcode_details->width }}in;
-            height: {{ $barcode_details->height }}in;
-            padding: 0.03in;
-            display: flex;
-            align-items: stretch;
-            justify-content: center;
-        }
-
-        .label-card__inner {
-            width: 100%;
-            height: 100%;
-            border: 2.5px solid var(--label-border);
-            border-radius: 14px;
-            background: #ffffff;
-            padding: 0.05in 0.07in 0.04in;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            text-align: left;
-        }
-
-        .label-card__business {
-            margin: 0 0 2px;
-            color: var(--label-accent);
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            line-height: 1.2;
-            font-family: 'Outfit', Arial, sans-serif;
-        }
-
-        .label-card__name {
-            margin: 0;
-            color: var(--label-accent);
-            font-family: 'Outfit', Arial, sans-serif;
-            font-weight: 800;
-            line-height: 1.1;
-            text-transform: uppercase;
-            word-break: break-word;
-            letter-spacing: 0.02em;
-        }
-
-        .label-card__variation,
-        .label-card__meta {
-            margin-top: 3px;
-            color: var(--label-muted);
-            font-family: Arial, sans-serif;
-            line-height: 1.2;
-            word-break: break-word;
-        }
-
-        .label-card__meta-line {
-            display: block;
-            margin-top: 2px;
-        }
-
-        .label-card__price {
-            margin: 4px 0 0;
-            color: #111111;
-            font-family: Arial, sans-serif;
-            line-height: 1.2;
-            word-break: break-word;
-        }
-
-        .label-card__price-label { font-weight: 500; }
-
-        .label-card__price-value { font-weight: 700; }
-
-        .label-card__codes {
-            margin-top: 4px;
-            flex: 1 1 0;
-            display: flex;
-            flex-direction: column;
-            align-items: stretch;
-            gap: 4px;
-            min-height: 0;
-            overflow: hidden;
-            width: 100%;
-        }
-
-        .label-card__code {
-            display: flex;
-            flex: 1 1 0;
-            width: 100%;
-            flex-direction: column;
-            min-width: 0;
-            min-height: 0;
-        }
-
-        /* Wrapper takes flex space; JS overrides with explicit px height after layout.
-           We keep flex:1 1 0 so the wrapper grows in CSS-only renders (print),
-           but JS will replace it with a measured height for screen rendering. */
-        .label-card__img-wrap {
-            position: relative;
-            flex: 1 1 0;
-            min-height: 4px;
-            width: 100%;
-            overflow: hidden;
-        }
-
-        .label-card__qr-image,
-        .label-card__barcode-image {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-
-        /* QR: stretch to fill the rectangular space (QRCODE,M tolerates distortion). */
-        .label-card__qr-image { object-fit: fill; }
-
-        /* Barcode: contain preserves relative bar widths — critical for scanner. */
-        .label-card__barcode-image { object-fit: contain; }
-
-        .label-card__code-text {
-            margin-top: 3px;
-            color: #111111;
-            font-family: 'DM Mono', 'Courier New', monospace;
-            font-size: 11px;
-            font-weight: 500;
-            letter-spacing: 0.05em;
-            line-height: 1.1;
-            text-align: center;
-            word-break: break-all;
-        }
+        /* ── Label card styles (shared partial) ─────────────────────── */
 
         /* ── Print overrides ────────────────────────────────────────── */
         @media print {
@@ -393,6 +265,7 @@
             margin-left:   {{ $margin_left }}in;
         }
     </style>
+    @include('labels.partials.label_card_styles')
 </head>
 <body>
 

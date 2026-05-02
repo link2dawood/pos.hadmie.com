@@ -53,28 +53,46 @@
     }
 @endphp
 
-<div class="label-card">
+@php
+    // Card dimensions come from $barcode_details when available (print preview),
+    // or from explicit $card_width/$card_height when used as an inline preview.
+    $card_w = $card_width  ?? (isset($barcode_details) ? ($barcode_details->width  . 'in') : '3in');
+    $card_h = $card_height ?? (isset($barcode_details) ? ($barcode_details->height . 'in') : '1.5in');
+
+    // Cap font sizes so text stays compact and the code area stays large.
+    $sz_business  = min((int) ($print['business_name_size'] ?? 9),  9);
+    $sz_name      = min((int) ($print['name_size']          ?? 10), 11);
+    $sz_variation = min((int) ($print['variations_size']    ?? 10), 10);
+    $sz_price     = min((int) ($print['price_size']         ?? 10), 10);
+    $sz_meta      = min(
+        (int) ($print['packing_date_size'] ?? 9),
+        (int) ($print['exp_date_size']     ?? 9),
+        (int) ($print['lot_number_size']   ?? 9),
+        9
+    );
+@endphp
+<div class="label-card" style="width: {{ $card_w }}; height: {{ $card_h }};">
     <div class="label-card__inner">
         @if(!empty($print['business_name']))
-            <div class="label-card__business" style="font-size: {{ $print['business_name_size'] }}px;">
+            <div class="label-card__business" style="font-size: {{ $sz_business }}px;">
                 {{ $business_name }}
             </div>
         @endif
 
         @if(!empty($print['name']))
-            <div class="label-card__name" style="font-size: {{ $print['name_size'] }}px;">
+            <div class="label-card__name" style="font-size: {{ $sz_name }}px;">
                 {{ $page_product->product_actual_name }}
             </div>
         @endif
 
         @if(!empty($print['variations']) && $page_product->is_dummy != 1)
-            <div class="label-card__variation" style="font-size: {{ $print['variations_size'] }}px;">
+            <div class="label-card__variation" style="font-size: {{ $sz_variation }}px;">
                 {{ $page_product->product_variation_name }}: <strong>{{ $page_product->variation_name }}</strong>
             </div>
         @endif
 
         @if(!empty($print['price']))
-            <div class="label-card__price" style="font-size: {{ $print['price_size'] }}px;">
+            <div class="label-card__price" style="font-size: {{ $sz_price }}px;">
                 <span class="label-card__price-label">@lang('lang_v1.price'):</span>
                 <span class="label-card__price-value">{{ session('currency')['symbol'] ?? '' }} {{ $formatted_price }}</span>
             </div>
@@ -87,7 +105,7 @@
         @endphp
 
         @if($has_meta)
-            <div class="label-card__meta" style="font-size: {{ min((int) ($print['packing_date_size'] ?? 11), (int) ($print['exp_date_size'] ?? 11), (int) ($print['lot_number_size'] ?? 11)) }}px;">
+            <div class="label-card__meta" style="font-size: {{ $sz_meta }}px;">
                 @if(!empty($print['lot_number']) && !empty($page_product->lot_number))
                     <span class="label-card__meta-line"><strong>@lang('lang_v1.lot_number'):</strong> {{ $page_product->lot_number }}</span>
                 @endif
@@ -105,7 +123,7 @@
                 $field_name = 'product_custom_field' . $loop->iteration;
             @endphp
             @if(!empty($cf) && !empty($page_product->$field_name) && !empty($print[$field_name]))
-                <div class="label-card__meta" style="font-size: {{ $print[$field_name . '_size'] }}px;">
+                <div class="label-card__meta" style="font-size: {{ min((int)($print[$field_name . '_size'] ?? 9), 9) }}px;">
                     <strong>{{ $cf }}:</strong> {{ $page_product->$field_name }}
                 </div>
             @endif

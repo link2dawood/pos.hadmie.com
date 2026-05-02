@@ -1,6 +1,14 @@
 @extends('layouts.app')
 @section('title', __('product.edit_product'))
 
+@section('css')
+    @include('labels.partials.label_card_styles')
+    <style>
+        /* Fix img-wrap heights for the edit-page label preview */
+        .js-edit-label-preview .label-card__img-wrap { overflow: hidden; }
+    </style>
+@endsection
+
 @section('content')
 
 @php
@@ -72,30 +80,42 @@
               </div>
             </div>
             <div class="col-sm-4">
-              <div class="row">
-                <div class="col-xs-6">
-                  <div class="well well-sm text-center">
-                    <strong>Barcode preview</strong>
-                    <div class="js-product-barcode-preview" style="margin-top: 10px;">
-                      @if(!empty($product->barcode))
-                        <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($product->barcode, $product->barcode_type ?: 'C128', 2, 60, [17, 24, 39], true) }}" alt="Barcode" style="max-width: 100%;">
-                      @else
-                        <small class="text-muted">No barcode yet</small>
-                      @endif
-                    </div>
-                  </div>
-                </div>
-                <div class="col-xs-6">
-                  <div class="well well-sm text-center">
-                    <strong>QR preview</strong>
-                    <div class="js-product-qr-preview" style="margin-top: 10px;">
-                      @if(!empty($product->qr_code_value))
-                        <img src="data:image/png;base64,{{ DNS2D::getBarcodePNG($product->qr_code_value, 'QRCODE,M', 6, 6, [17, 24, 39]) }}" alt="QR code" style="max-width: 100%;">
-                      @else
-                        <small class="text-muted">No QR yet</small>
-                      @endif
-                    </div>
-                  </div>
+              <div class="well well-sm text-center" style="padding:8px;">
+                <strong style="display:block; margin-bottom:6px; font-size:12px;">Label Preview</strong>
+                @php
+                  $_edit_print = [
+                    'business_name'      => true,  'business_name_size' => 9,
+                    'name'               => true,  'name_size'          => 11,
+                    'variations'         => false, 'variations_size'    => 9,
+                    'price'              => true,  'price_size'         => 10,
+                    'price_type'         => 'inclusive',
+                    'barcode'            => !empty($product->barcode),
+                    'barcode_text'       => true,
+                    'qr_code'            => !empty($product->qr_code_value),
+                    'qr_text'            => false,
+                    'exp_date'           => false, 'packing_date' => false, 'lot_number' => false,
+                  ];
+                  $_edit_product = (object)[
+                    'product_actual_name'    => $product->name,
+                    'sub_sku'                => $product->variations->first()->sub_sku ?? null,
+                    'barcode'                => $product->barcode,
+                    'qr_code_value'          => $product->qr_code_value,
+                    'barcode_type'           => $product->barcode_type ?: 'C128',
+                    'sell_price_inc_tax'     => $product->variations->first()->sell_price_inc_tax ?? 0,
+                    'default_sell_price'     => $product->variations->first()->sell_price_inc_tax ?? 0,
+                    'is_dummy'               => 0,
+                    'product_variation_name' => null, 'variation_name' => null,
+                    'exp_date' => null, 'packing_date' => null, 'lot_number' => null,
+                  ];
+                @endphp
+                <div style="display:flex; justify-content:center;">
+                  @include('labels.partials.sticker', [
+                    'page_product'  => $_edit_product,
+                    'print'         => $_edit_print,
+                    'business_name' => session('business.name', ''),
+                    'card_width'    => '260px',
+                    'card_height'   => '130px',
+                  ])
                 </div>
               </div>
             </div>
@@ -438,6 +458,18 @@
   <script type="text/javascript">
     $(document).ready( function(){
       __page_leave_confirmation('#product_add_form');
+
+      // Fix img-wrap heights in the label preview card
+      setTimeout(function() {
+        document.querySelectorAll('.label-card__code').forEach(function(code) {
+          var wrap = code.querySelector('.label-card__img-wrap');
+          if (!wrap) return;
+          var h = code.getBoundingClientRect().height;
+          var t = code.querySelector('.label-card__code-text');
+          var th = t ? t.getBoundingClientRect().height + 2 : 0;
+          if (h - th > 0) { wrap.style.height = (h - th) + 'px'; wrap.style.flex = 'none'; }
+        });
+      }, 100);
     });
   </script>
 @endsection

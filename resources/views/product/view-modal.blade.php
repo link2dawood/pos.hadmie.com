@@ -9,101 +9,94 @@
 	    		$primary_variation = $product->variations->first();
 	    		$code_price_value = !empty($primary_variation) ? $primary_variation->sell_price_inc_tax : null;
 
-	    		// sub_sku is what the label system encodes in QR codes and what POS scanner matches
-	    		$qr_scan_value = (!empty($primary_variation) && !empty($primary_variation->sub_sku))
+	    		$qr_scan_value     = (!empty($primary_variation) && !empty($primary_variation->sub_sku))
 	    			? $primary_variation->sub_sku
 	    			: ($product->qr_code_value ?? $product->sku);
 	    		$barcode_scan_value = !empty($product->barcode) ? $product->barcode : $qr_scan_value;
+	    		$download_safe_sku  = preg_replace('/[^A-Za-z0-9._-]+/', '_', $product->sku ?? ('product_'.$product->id));
 
-	    		$_barcode_b64 = !empty($barcode_scan_value)
-	    			? DNS1D::getBarcodePNG($barcode_scan_value, $product->barcode_type ?: 'C128', 2, 60, [17, 24, 39], true)
-	    			: false;
-	    		$barcode_data_uri = !empty($_barcode_b64) ? 'data:image/png;base64,' . $_barcode_b64 : null;
-
-	    		$_qr_b64 = !empty($qr_scan_value)
-	    			? DNS2D::getBarcodePNG($qr_scan_value, 'QRCODE,M', 6, 6, [17, 24, 39])
-	    			: false;
-	    		$qr_data_uri = !empty($_qr_b64) ? 'data:image/png;base64,' . $_qr_b64 : null;
-	    		$download_safe_sku = preg_replace('/[^A-Za-z0-9._-]+/', '_', $product->sku ?? ('product_'.$product->id));
-
-	    		// Pre-format price with currency so the printed/downloaded card matches the label design
-	    		$_currency     = session('currency') ?? [];
-	    		$_decimal_sep  = $_currency['decimal_separator']  ?? '.';
-	    		$_thousand_sep = $_currency['thousand_separator'] ?? ',';
-	    		$_precision    = (int) session('business.currency_precision', 2);
-	    		$_symbol       = $_currency['symbol'] ?? '';
-	    		$formatted_display_price = !is_null($code_price_value)
-	    			? $_symbol . ' ' . number_format((float) $code_price_value, $_precision, $_decimal_sep, $_thousand_sep)
-	    			: '--';
+	    		// Build a synthetic $print and $page_product for the shared sticker partial.
+	    		$_modal_print = [
+	    			'business_name'      => true,
+	    			'business_name_size' => 9,
+	    			'name'               => true,
+	    			'name_size'          => 11,
+	    			'variations'         => false,
+	    			'variations_size'    => 9,
+	    			'price'              => !is_null($code_price_value),
+	    			'price_size'         => 10,
+	    			'price_type'         => 'inclusive',
+	    			'barcode'            => !empty($barcode_scan_value),
+	    			'barcode_text'       => true,
+	    			'qr_code'            => !empty($qr_scan_value),
+	    			'qr_text'            => false,
+	    			'exp_date'           => false,
+	    			'packing_date'       => false,
+	    			'lot_number'         => false,
+	    		];
+	    		$_modal_product = (object)[
+	    			'product_actual_name'    => $product->name,
+	    			'sub_sku'                => $primary_variation->sub_sku ?? null,
+	    			'barcode'                => $product->barcode,
+	    			'qr_code_value'          => $product->qr_code_value,
+	    			'barcode_type'           => $product->barcode_type ?: 'C128',
+	    			'sell_price_inc_tax'     => $code_price_value,
+	    			'default_sell_price'     => $code_price_value,
+	    			'is_dummy'               => 0,
+	    			'product_variation_name' => null,
+	    			'variation_name'         => null,
+	    			'exp_date'               => null,
+	    			'packing_date'           => null,
+	    			'lot_number'             => null,
+	    		];
 	    	@endphp
+
+	    	{{-- Inject label card styles for this AJAX-loaded modal --}}
+	    	@include('labels.partials.label_card_styles')
+	    	<style>
+	    		.modal-label-preview { display:flex; justify-content:center; padding:12px 0 8px; }
+	    		.modal-label-actions { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-bottom:10px; }
+	    		/* Fix img-wrap heights inside the modal card */
+	    	</style>
+	    	<script>
+	    		document.addEventListener('DOMContentLoaded', function() {
+	    			setTimeout(function() {
+	    				document.querySelectorAll('.modal-label-preview .label-card__code').forEach(function(code) {
+	    					var wrap = code.querySelector('.label-card__img-wrap');
+	    					if (!wrap) return;
+	    					var h = code.getBoundingClientRect().height;
+	    					var t = code.querySelector('.label-card__code-text');
+	    					var th = t ? t.getBoundingClientRect().height + 2 : 0;
+	    					if (h - th > 0) { wrap.style.height = (h - th) + 'px'; wrap.style.flex = 'none'; }
+	    				});
+	    			}, 80);
+	    		});
+	    	</script>
+
 	      		<div class="row">
 	      			<div class="col-sm-9">
 	      				<div class="col-sm-4 invoice-col">
-	      					<b>@lang('product.sku'):</b>
-						{{$product->sku }}<br>
-						<b>Barcode:</b>
-						{{$product->barcode ?? '--' }}<br>
-						@if(!empty($barcode_data_uri))
-							<img src="{{ $barcode_data_uri }}" alt="Barcode" style="max-width:160px; display:block; margin-top:4px;">
-							<small class="text-muted" style="display:block;">
-								<strong>Selling Price:</strong>
-								@if(!is_null($code_price_value))
-									<span class="display_currency" data-currency_symbol="true">{{ $code_price_value }}</span>
-								@else
-									--
-								@endif
-							</small>
-							<div class="btn-group btn-group-xs no-print" style="margin-top:6px;">
-								<button type="button" class="btn btn-default js-download-generated-code"
-									data-image-src="{{ $barcode_data_uri }}"
-									data-product-name="{{ $product->name }}"
-									data-code-value="{{ $barcode_scan_value }}"
-									data-price-value="{{ $formatted_display_price }}"
-									data-download-name="barcode_{{ $download_safe_sku }}.png">
-									<i class="fa fa-download"></i> Download
-								</button>
-								<button type="button" class="btn btn-default js-print-generated-code"
-									data-image-src="{{ $barcode_data_uri }}"
-									data-product-name="{{ $product->name }}"
-									data-code-value="{{ $barcode_scan_value }}"
-									data-price-value="{{ $formatted_display_price }}">
-									<i class="fa fa-print"></i> Print
-								</button>
-							</div>
-						@endif
-						<b>QR value:</b>
-						{{$product->qr_code_value ?? '--' }}<br>
-						@if(!empty($qr_data_uri))
-							<img src="{{ $qr_data_uri }}" alt="QR code" style="max-width:120px; display:block; margin-top:4px;">
-							<small class="text-muted" style="display:block;">
-								<strong>Selling Price:</strong>
-								@if(!is_null($code_price_value))
-									<span class="display_currency" data-currency_symbol="true">{{ $code_price_value }}</span>
-								@else
-									--
-								@endif
-							</small>
-							<div class="btn-group btn-group-xs no-print" style="margin-top:6px;">
-								<button type="button" class="btn btn-default js-download-generated-code"
-									data-image-src="{{ $qr_data_uri }}"
-									data-product-name="{{ $product->name }}"
-									data-code-value="{{ $qr_scan_value }}"
-									data-price-value="{{ $formatted_display_price }}"
-									data-download-name="qrcode_{{ $download_safe_sku }}.png">
-									<i class="fa fa-download"></i> Download
-								</button>
-								<button type="button" class="btn btn-default js-print-generated-code"
-									data-image-src="{{ $qr_data_uri }}"
-									data-product-name="{{ $product->name }}"
-									data-code-value="{{ $qr_scan_value }}"
-									data-price-value="{{ $formatted_display_price }}">
-									<i class="fa fa-print"></i> Print
-								</button>
-								<a href="{{ url('/labels/show?product_id=' . $product->id) }}" target="_blank" class="btn btn-default btn-xs" style="margin-top:4px;display:inline-block;">
+	      					<b>@lang('product.sku'):</b> {{$product->sku }}<br>
+						<b>Barcode:</b> {{$product->barcode ?? '--' }}<br>
+						<b>QR value:</b> {{$product->qr_code_value ?? '--' }}<br>
+
+	      					{{-- Label card preview (shared sticker partial) --}}
+	      					<div class="modal-label-preview">
+	      						@include('labels.partials.sticker', [
+	      							'page_product'  => $_modal_product,
+	      							'print'         => $_modal_print,
+	      							'business_name' => session('business.name', ''),
+	      							'card_width'    => '280px',
+	      							'card_height'   => '140px',
+	      						])
+	      					</div>
+
+	      					<div class="modal-label-actions no-print">
+								<a href="{{ url('/labels/show?product_id=' . $product->id) }}" target="_blank" class="btn btn-default btn-xs">
 									<i class="fa fa-tag"></i> Print Label Sheet
 								</a>
-							</div>
-						@endif
+	      					</div>
+
 						<b>@lang('product.brand'): </b>
 						{{$product->brand->name ?? '--' }}<br>
 						<b>@lang('product.unit'): </b>

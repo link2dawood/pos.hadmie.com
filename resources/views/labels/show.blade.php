@@ -69,9 +69,9 @@
 
 							<div class="input-group">
       							<div class="input-group-addon"><b>@lang( 'lang_v1.size' )</b></div>
-								<input type="text" class="form-control" 
-									name="print[name_size]" 
-									value="15">
+								<input type="text" class="form-control"
+									name="print[name_size]"
+									value="11">
 							</div>
 						</td>
 
@@ -84,9 +84,9 @@
 
 							<div class="input-group">
       							<div class="input-group-addon"><b>@lang( 'lang_v1.size' )</b></div>
-								<input type="text" class="form-control" 
-									name="print[variations_size]" 
-									value="17">
+								<input type="text" class="form-control"
+									name="print[variations_size]"
+									value="9">
 							</div>
 						</td>
 
@@ -99,9 +99,9 @@
 
 							<div class="input-group">
       							<div class="input-group-addon"><b>@lang( 'lang_v1.size' )</b></div>
-								<input type="text" class="form-control" 
-									name="print[price_size]" 
-									value="17">
+								<input type="text" class="form-control"
+									name="print[price_size]"
+									value="10">
 							</div>
 
 						</td>
@@ -133,9 +133,9 @@
 
 							<div class="input-group">
       							<div class="input-group-addon"><b>@lang( 'lang_v1.size' )</b></div>
-								<input type="text" class="form-control" 
-									name="print[business_name_size]" 
-									value="20">
+								<input type="text" class="form-control"
+									name="print[business_name_size]"
+									value="9">
 							</div>
 						</td>
 
