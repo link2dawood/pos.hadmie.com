@@ -318,12 +318,12 @@
             object-fit: fill;
         }
 
-        /* QR Code (PDF417): preserve natural rectangular aspect ratio — wide and short */
+        /* QR Code (PDF417): always render as a wide rectangle regardless of barcode value length */
         .label-card__qr-image {
             display: block;
             width: 100%;
-            height: auto;
-            object-fit: contain;
+            aspect-ratio: 4 / 1;
+            object-fit: fill;
         }
 
         .label-card__code-text {

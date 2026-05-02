@@ -41,11 +41,11 @@
         }
     }
 
-    // Generate QR PNG safely — PDF417 with taller rows so the image is clearly rectangular.
+    // Generate QR PNG safely — PDF417 is natively wide; CSS aspect-ratio forces the rectangle.
     $qr_img = null;
     if (!empty($qr_value)) {
         try {
-            $qr_img = DNS2D::getBarcodePNG($qr_value, 'PDF417', 3, 6, [0, 0, 0]);
+            $qr_img = DNS2D::getBarcodePNG($qr_value, 'PDF417', 3, 3, [0, 0, 0]);
         } catch (\Throwable $e) {
             $qr_img = null;
         }
