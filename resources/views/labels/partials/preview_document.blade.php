@@ -374,13 +374,28 @@
             });
         }
 
+        /* Shrink barcode text font until it fits on one line. */
+        function fitBarcodeText() {
+            document.querySelectorAll('.label-card__code-text--barcode').forEach(function(el) {
+                var parent = el.parentElement;
+                if (!parent) return;
+                var maxW = parent.getBoundingClientRect().width;
+                var size = 9;
+                el.style.fontSize = size + 'px';
+                while (el.scrollWidth > maxW && size > 5) {
+                    size -= 0.5;
+                    el.style.fontSize = size + 'px';
+                }
+            });
+        }
+
         /* Run after paint so CSS layout is fully resolved. */
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', function() {
-                requestAnimationFrame(function() { setTimeout(fixImgWrapHeights, 60); });
+                requestAnimationFrame(function() { setTimeout(function(){ fixImgWrapHeights(); fitBarcodeText(); }, 60); });
             });
         } else {
-            requestAnimationFrame(function() { setTimeout(fixImgWrapHeights, 60); });
+            requestAnimationFrame(function() { setTimeout(function(){ fixImgWrapHeights(); fitBarcodeText(); }, 60); });
         }
 
         /* ── Download PNG ───────────────────────────────────────────── */
