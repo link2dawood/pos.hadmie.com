@@ -27,14 +27,14 @@
         $barcode_type = 'C128';
     }
 
-    // Generate barcode PNG — h=80 gives taller bars with good print resolution.
+    // Generate barcode PNG — last param=true renders the number text inside the image (standard barcode style).
     $barcode_img = null;
     if (!empty($barcode_value)) {
         try {
-            $barcode_img = DNS1D::getBarcodePNG($barcode_value, $barcode_type, 3, 80, [0, 0, 0], false);
+            $barcode_img = DNS1D::getBarcodePNG($barcode_value, $barcode_type, 3, 80, [0, 0, 0], true);
         } catch (\Throwable $e) {
             try {
-                $barcode_img = DNS1D::getBarcodePNG($barcode_value, 'C128', 3, 80, [0, 0, 0], false);
+                $barcode_img = DNS1D::getBarcodePNG($barcode_value, 'C128', 3, 80, [0, 0, 0], true);
             } catch (\Throwable $e2) {
                 $barcode_img = null;
             }
@@ -149,9 +149,7 @@
                             src="data:image/png;base64,{{ $barcode_img }}"
                             alt="Barcode">
                     </div>
-                    @if($show_barcode_text)
-                        <div class="label-card__code-text label-card__code-text--barcode">{{ $barcode_value }}</div>
-                    @endif
+                    {{-- barcode number is rendered inside the image --}}
                 </div>
             @endif
         </div>
