@@ -383,7 +383,7 @@
                 var size = 13;
                 el.style.fontSize = size + 'px';
                 while (el.scrollWidth > maxW && size > 7) {
-                    size -= 0.5;
+                    size -= 0.7;
                     el.style.fontSize = size + 'px';
                 }
             });
