@@ -19,12 +19,15 @@
         : (float) ($page_product->sell_price_inc_tax ?? 0);
     $formatted_price = function_exists('num_format') ? num_format($raw_price) : number_format($raw_price, 2);
 
-    // Numeric-only types (EAN, UPC, etc.) throw if the SKU has letters/hyphens.
-    // Fall back to C128 which encodes any printable ASCII safely.
+    // Fall back to C128 when the value has letters/hyphens OR exceeds the type's max digit count.
     $barcode_type = $page_product->barcode_type ?: 'C128';
     $digit_only_types = ['EAN8','EAN13','UPCA','UPCE','I25','I25+','S25','S25+','MSI','MSI+','POSTNET','PLANET','CODE11'];
-    if (!empty($barcode_value) && in_array($barcode_type, $digit_only_types) && !ctype_digit($barcode_value)) {
-        $barcode_type = 'C128';
+    $barcode_max_len  = ['EAN8'=>8,'EAN13'=>13,'UPCA'=>12,'UPCE'=>8,'I25'=>0,'I25+'=>0,'S25'=>0,'S25+'=>0,'MSI'=>0,'MSI+'=>0,'POSTNET'=>0,'PLANET'=>0,'CODE11'=>0];
+    if (!empty($barcode_value) && in_array($barcode_type, $digit_only_types)) {
+        $maxLen = $barcode_max_len[$barcode_type] ?? 0;
+        if (!ctype_digit($barcode_value) || ($maxLen > 0 && strlen($barcode_value) > $maxLen)) {
+            $barcode_type = 'C128';
+        }
     }
 
     // Generate barcode PNG — last param=true renders the number text inside the image (standard barcode style).

@@ -135,8 +135,8 @@
     /* QR: fill the square container. */
     .label-card__qr-image     { object-fit: fill; }
 
-    /* Barcode: fill removes the blank space top/bottom; bar widths scale uniformly so scanners still read correctly. */
-    .label-card__barcode-image { object-fit: fill; }
+    /* Barcode: contain preserves bar widths — critical for scanners. */
+    .label-card__barcode-image { object-fit: contain; }
 
     .label-card__code-text {
         margin-top: 1px;
