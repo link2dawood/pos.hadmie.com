@@ -31,10 +31,10 @@
     $barcode_img = null;
     if (!empty($barcode_value)) {
         try {
-            $barcode_img = DNS1D::getBarcodePNG($barcode_value, $barcode_type, 4, 120, [0, 0, 0], true);
+            $barcode_img = DNS1D::getBarcodePNG($barcode_value, $barcode_type, 4, 120, [0, 0, 0], false);
         } catch (\Throwable $e) {
             try {
-                $barcode_img = DNS1D::getBarcodePNG($barcode_value, 'C128', 4, 120, [0, 0, 0], true);
+                $barcode_img = DNS1D::getBarcodePNG($barcode_value, 'C128', 4, 120, [0, 0, 0], false);
             } catch (\Throwable $e2) {
                 $barcode_img = null;
             }
@@ -149,7 +149,9 @@
                             src="data:image/png;base64,{{ $barcode_img }}"
                             alt="Barcode">
                     </div>
-                    {{-- barcode number is rendered inside the image --}}
+                    @if($show_barcode_text)
+                        <div class="label-card__code-text label-card__code-text--barcode">{{ $barcode_value }}</div>
+                    @endif
                 </div>
             @endif
         </div>
