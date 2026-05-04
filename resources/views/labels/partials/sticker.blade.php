@@ -31,10 +31,10 @@
     $barcode_img = null;
     if (!empty($barcode_value)) {
         try {
-            $barcode_img = DNS1D::getBarcodePNG($barcode_value, $barcode_type, 3, 80, [0, 0, 0], true);
+            $barcode_img = DNS1D::getBarcodePNG($barcode_value, $barcode_type, 4, 120, [0, 0, 0], true);
         } catch (\Throwable $e) {
             try {
-                $barcode_img = DNS1D::getBarcodePNG($barcode_value, 'C128', 3, 80, [0, 0, 0], true);
+                $barcode_img = DNS1D::getBarcodePNG($barcode_value, 'C128', 4, 120, [0, 0, 0], true);
             } catch (\Throwable $e2) {
                 $barcode_img = null;
             }
