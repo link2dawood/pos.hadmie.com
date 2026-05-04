@@ -27,15 +27,14 @@
         $barcode_type = 'C128';
     }
 
-    // Generate barcode PNG safely; catch both \Exception and PHP 8 \Error/\TypeError via \Throwable.
-    // h=50 keeps the image flat so it fills the label width when displayed with object-fit:contain.
+    // Generate barcode PNG — h=80 gives taller bars with good print resolution.
     $barcode_img = null;
     if (!empty($barcode_value)) {
         try {
-            $barcode_img = DNS1D::getBarcodePNG($barcode_value, $barcode_type, 3, 50, [0, 0, 0], false);
+            $barcode_img = DNS1D::getBarcodePNG($barcode_value, $barcode_type, 3, 80, [0, 0, 0], false);
         } catch (\Throwable $e) {
             try {
-                $barcode_img = DNS1D::getBarcodePNG($barcode_value, 'C128', 3, 50, [0, 0, 0], false);
+                $barcode_img = DNS1D::getBarcodePNG($barcode_value, 'C128', 3, 80, [0, 0, 0], false);
             } catch (\Throwable $e2) {
                 $barcode_img = null;
             }
@@ -59,16 +58,16 @@
     $card_w = $card_width  ?? (isset($barcode_details) ? ($barcode_details->width  . 'in') : '3in');
     $card_h = $card_height ?? (isset($barcode_details) ? ($barcode_details->height . 'in') : '1.5in');
 
-    // Cap font sizes so text stays compact and the code area stays large.
-    $sz_business  = min((int) ($print['business_name_size'] ?? 9),  9);
-    $sz_name      = min((int) ($print['name_size']          ?? 10), 11);
-    $sz_variation = min((int) ($print['variations_size']    ?? 10), 10);
-    $sz_price     = min((int) ($print['price_size']         ?? 10), 10);
+    // Cap font sizes — keep all text small so codes stay large.
+    $sz_business  = min((int) ($print['business_name_size'] ?? 8),  8);
+    $sz_name      = min((int) ($print['name_size']          ?? 9),  9);
+    $sz_variation = min((int) ($print['variations_size']    ?? 8),  8);
+    $sz_price     = min((int) ($print['price_size']         ?? 8),  8);
     $sz_meta      = min(
-        (int) ($print['packing_date_size'] ?? 9),
-        (int) ($print['exp_date_size']     ?? 9),
-        (int) ($print['lot_number_size']   ?? 9),
-        9
+        (int) ($print['packing_date_size'] ?? 8),
+        (int) ($print['exp_date_size']     ?? 8),
+        (int) ($print['lot_number_size']   ?? 8),
+        8
     );
 @endphp
 <div class="label-card" style="width: {{ $card_w }}; height: {{ $card_h }};">
@@ -123,7 +122,7 @@
                 $field_name = 'product_custom_field' . $loop->iteration;
             @endphp
             @if(!empty($cf) && !empty($page_product->$field_name) && !empty($print[$field_name]))
-                <div class="label-card__meta" style="font-size: {{ min((int)($print[$field_name . '_size'] ?? 9), 9) }}px;">
+                <div class="label-card__meta" style="font-size: {{ min((int)($print[$field_name . '_size'] ?? 8), 8) }}px;">
                     <strong>{{ $cf }}:</strong> {{ $page_product->$field_name }}
                 </div>
             @endif

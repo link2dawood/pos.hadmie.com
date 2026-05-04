@@ -27,7 +27,7 @@
         display: flex;
         flex-direction: column;
         overflow: hidden;
-        text-align: left;
+        text-align: center;
     }
 
     /* ── Text rows ─────────────────────────────────────────────── */
@@ -83,7 +83,7 @@
         flex: 1 1 0;
         display: flex;
         flex-direction: column;
-        align-items: stretch;
+        align-items: center;
         gap: 2px;
         min-height: 0;
         overflow: hidden;
@@ -95,6 +95,7 @@
         flex: 1 1 0;
         width: 100%;
         flex-direction: column;
+        align-items: center;
         min-width: 0;
         min-height: 0;
     }
@@ -109,6 +110,21 @@
         overflow: hidden;
     }
 
+    /* QR: square container — height drives flex, width matches via aspect-ratio. */
+    .label-card__img-wrap--qr {
+        flex: 1 1 0;
+        aspect-ratio: 1 / 1;
+        width: unset;
+        max-width: 100%;
+        align-self: center;
+    }
+
+    /* Barcode: full width, centered. */
+    .label-card__img-wrap--barcode {
+        width: 100%;
+        align-self: center;
+    }
+
     .label-card__qr-image,
     .label-card__barcode-image {
         position: absolute;
@@ -116,19 +132,19 @@
         width: 100%; height: 100%;
     }
 
-    /* QR: stretch to rectangular space (QRCODE,M tolerates distortion). */
+    /* QR: fill the square container. */
     .label-card__qr-image     { object-fit: fill; }
 
     /* Barcode: contain preserves bar widths — critical for scanners. */
     .label-card__barcode-image { object-fit: contain; }
 
     .label-card__code-text {
-        margin-top: 2px;
+        margin-top: 1px;
         color: #111111;
         font-family: 'DM Mono', 'Courier New', monospace;
-        font-size: 8px;
+        font-size: 7px;
         font-weight: 500;
-        letter-spacing: 0.04em;
+        letter-spacing: 0.03em;
         line-height: 1.0;
         text-align: center;
         word-break: break-all;
