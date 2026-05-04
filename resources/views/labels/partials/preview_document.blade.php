@@ -380,7 +380,7 @@
                 var parent = el.parentElement;
                 if (!parent) return;
                 var maxW = parent.getBoundingClientRect().width;
-                var size = 13;
+                var size = 16;
                 el.style.fontSize = size + 'px';
                 while (el.scrollWidth > maxW && size > 7) {
                     size -= 0.7;
