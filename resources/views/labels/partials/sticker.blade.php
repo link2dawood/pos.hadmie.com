@@ -137,9 +137,7 @@
                             src="data:image/png;base64,{{ $qr_img }}"
                             alt="QR code">
                     </div>
-                    @if($show_qr_text)
-                        <div class="label-card__code-text">{{ $qr_value }}</div>
-                    @endif
+                    {{-- QR text intentionally hidden --}}
                 </div>
             @endif
 
@@ -152,7 +150,7 @@
                             alt="Barcode">
                     </div>
                     @if($show_barcode_text)
-                        <div class="label-card__code-text">{{ $barcode_value }}</div>
+                        <div class="label-card__code-text label-card__code-text--barcode">{{ $barcode_value }}</div>
                     @endif
                 </div>
             @endif

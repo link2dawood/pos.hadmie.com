@@ -149,4 +149,10 @@
         text-align: center;
         word-break: break-all;
     }
+
+    .label-card__code-text--barcode {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+    }
 </style>
