@@ -84,7 +84,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 0;
+        gap: 2px;
         min-height: 0;
         overflow: hidden;
         width: 100%;
@@ -119,11 +119,9 @@
         align-self: center;
     }
 
-    /* Barcode: fixed rectangle — wide and short. */
+    /* Barcode: full width, centered. */
     .label-card__img-wrap--barcode {
         width: 100%;
-        aspect-ratio: 4 / 1;
-        flex: none;
         align-self: center;
     }
 
@@ -153,7 +151,6 @@
     }
 
     .label-card__code-text--barcode {
-        margin-top: 0;
         font-size: 13px;
         font-weight: 600;
         letter-spacing: 0.1em;
