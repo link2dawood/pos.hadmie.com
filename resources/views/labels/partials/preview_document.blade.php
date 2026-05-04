@@ -374,15 +374,15 @@
             });
         }
 
-        /* Shrink barcode text font until it fits on one line. */
+        /* Shrink barcode text only when it overflows — starts at 13px, stops at 7px. */
         function fitBarcodeText() {
             document.querySelectorAll('.label-card__code-text--barcode').forEach(function(el) {
                 var parent = el.parentElement;
                 if (!parent) return;
                 var maxW = parent.getBoundingClientRect().width;
-                var size = 9;
+                var size = 13;
                 el.style.fontSize = size + 'px';
-                while (el.scrollWidth > maxW && size > 5) {
+                while (el.scrollWidth > maxW && size > 7) {
                     size -= 0.5;
                     el.style.fontSize = size + 'px';
                 }

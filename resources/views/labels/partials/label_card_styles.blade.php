@@ -151,9 +151,9 @@
     }
 
     .label-card__code-text--barcode {
-        font-size: 9px;
+        font-size: 13px;
         font-weight: 600;
-        letter-spacing: 0.04em;
+        letter-spacing: 0.06em;
         white-space: nowrap;
         overflow: hidden;
         width: 100%;
