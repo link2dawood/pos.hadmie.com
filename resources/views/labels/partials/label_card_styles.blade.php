@@ -122,7 +122,7 @@
     /* Barcode: short rectangle — fixed aspect so bars don't get tall and never distort horizontally. */
     .label-card__img-wrap--barcode {
         width: 100%;
-        aspect-ratio: 5 / 1;
+        aspect-ratio: 8 / 1;
         flex: none;
         align-self: center;
     }
@@ -137,8 +137,8 @@
     /* QR: fill the square container. */
     .label-card__qr-image     { object-fit: fill; }
 
-    /* Barcode: contain preserves exact bar-width ratios — required for scanners. */
-    .label-card__barcode-image { object-fit: contain; }
+    /* Barcode: fill the wrapper exactly — wrapper aspect-ratio matches PNG so bars stay proportional and no green gaps appear. */
+    .label-card__barcode-image { object-fit: fill; }
 
     .label-card__code-text {
         margin-top: 1px;
