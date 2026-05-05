@@ -93,12 +93,13 @@
 
     .label-card__code {
         display: flex;
-        flex: 0 0 auto;
+        flex: 1 1 0;
         width: 100%;
         flex-direction: column;
         align-items: center;
         justify-content: flex-start;
         min-width: 0;
+        min-height: 0;
     }
 
     /* Wrapper gets explicit px height from JS so the absolutely
