@@ -425,9 +425,17 @@
 
             var promises = Array.from(sheets).map(function(sheet, index) {
                 return html2canvas(sheet, {
-                    scale: 2,
+                    scale: 4,
                     useCORS: true,
-                    backgroundColor: '#ffffff'
+                    backgroundColor: '#ffffff',
+                    imageTimeout: 0,
+                    logging: false,
+                    onclone: function(clonedDoc) {
+                        // Disable anti-aliasing on barcode/QR images so bars stay solid black, not gray.
+                        clonedDoc.querySelectorAll('.label-card__barcode-image, .label-card__qr-image').forEach(function(img) {
+                            img.style.imageRendering = 'pixelated';
+                        });
+                    }
                 }).then(function(canvas) {
                     var link = document.createElement('a');
                     link.download = 'label-sheet-' + (index + 1) + '.png';

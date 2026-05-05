@@ -141,12 +141,17 @@
         object-fit: fill;
     }
 
-    /* Barcode: fills wrapper preserving bar-width ratios — scannable. */
+    /* Barcode: fills wrapper preserving bar-width ratios — scannable.
+       image-rendering keeps bars solid black instead of anti-aliased gray when scaled. */
     .label-card__barcode-image {
         position: absolute;
         top: 0; left: 0;
         width: 100%; height: 100%;
         object-fit: contain;
+        image-rendering: -moz-crisp-edges;
+        image-rendering: -webkit-crisp-edges;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
     }
 
     .label-card__code-text {
