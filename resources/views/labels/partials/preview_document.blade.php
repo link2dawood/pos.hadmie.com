@@ -377,20 +377,32 @@
             });
         }
 
-        /* Shrink barcode text only when it truly overflows — measures with overflow:visible so scrollWidth is accurate. */
+        /* Shrink barcode text so the FULL SKU always fits on one line.
+           We measure natural text width by temporarily removing width:100% and overflow:hidden. */
         function fitBarcodeText() {
             document.querySelectorAll('.label-card__code-text--barcode').forEach(function(el) {
                 var parent = el.parentElement;
                 if (!parent) return;
                 var maxW = parent.getBoundingClientRect().width;
+
+                // Strip layout constraints so getBoundingClientRect returns the natural text width.
+                el.style.width = 'auto';
+                el.style.maxWidth = 'none';
+                el.style.overflow = 'visible';
+                el.style.display = 'inline-block';
+
                 var size = 16;
                 el.style.fontSize = size + 'px';
-                el.style.overflow = 'visible';
-                while (el.getBoundingClientRect().width > maxW && size > 7) {
+                while (el.getBoundingClientRect().width > maxW && size > 4) {
                     size -= 0.5;
                     el.style.fontSize = size + 'px';
                 }
+
+                // Restore layout so it stays centered under the barcode.
+                el.style.width = '100%';
+                el.style.maxWidth = '';
                 el.style.overflow = 'hidden';
+                el.style.display = '';
             });
         }
 
