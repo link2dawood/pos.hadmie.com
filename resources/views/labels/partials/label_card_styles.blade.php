@@ -81,7 +81,7 @@
     /* ── Codes section (fills all remaining vertical space) ─────── */
     .label-card__codes {
         margin-top: 2px;
-        flex: 0 0 auto;
+        flex: 1 1 0;
         display: flex;
         flex-direction: column;
         align-items: center;
