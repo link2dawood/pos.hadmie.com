@@ -429,7 +429,15 @@
                     useCORS: true,
                     backgroundColor: '#ffffff',
                     imageTimeout: 0,
-                    logging: false
+                    logging: false,
+                    onclone: function(clonedDoc) {
+                        // Kill entry animation + force full opacity so export captures the final state.
+                        clonedDoc.querySelectorAll('.label-sheet').forEach(function(s) {
+                            s.style.animation = 'none';
+                            s.style.opacity = '1';
+                            s.style.transform = 'none';
+                        });
+                    }
                 }).then(function(canvas) {
                     var link = document.createElement('a');
                     link.download = 'label-sheet-' + (index + 1) + '.png';

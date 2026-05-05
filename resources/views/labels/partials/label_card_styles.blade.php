@@ -35,7 +35,7 @@
     /* ── Text rows ─────────────────────────────────────────────── */
     .label-card__business {
         margin: 0;
-        color: var(--label-accent);
+        color: #1d3557;
         font-weight: 700;
         letter-spacing: 0.05em;
         text-transform: uppercase;
@@ -45,7 +45,7 @@
 
     .label-card__name {
         margin: 0;
-        color: var(--label-accent);
+        color: #1d3557;
         font-family: 'Outfit', Arial, sans-serif;
         font-weight: 800;
         line-height: 1.0;
@@ -57,7 +57,7 @@
     .label-card__variation,
     .label-card__meta {
         margin-top: 1px;
-        color: var(--label-muted);
+        color: #4b5563;
         font-family: Arial, sans-serif;
         line-height: 1.1;
         word-break: break-word;
