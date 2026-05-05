@@ -91,6 +91,7 @@
 	<script src="{{ asset('js/html5-qrcode.min.js?v=' . $asset_v) }}"></script>
 	<script src="{{ asset('js/pos.js?v=' . $asset_v) }}"></script>
 	<script src="{{ asset('js/pos_scanner.js?v=' . $asset_v) }}"></script>
+	<script src="{{ asset('js/product_scanner.js?v=' . $asset_v) }}"></script>
 	<script src="{{ asset('js/printer.js?v=' . $asset_v) }}"></script>
 	<script src="{{ asset('js/product.js?v=' . $asset_v) }}"></script>
 	<script src="{{ asset('js/opening_stock.js?v=' . $asset_v) }}"></script>

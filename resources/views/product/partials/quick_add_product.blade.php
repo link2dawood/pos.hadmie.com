@@ -20,8 +20,12 @@
         <div class="col-sm-4">
           <div class="form-group">
             {!! Form::label('sku', __('product.sku') . ':') !!} @show_tooltip(__('tooltip.sku'))
-            {!! Form::text('sku', null, ['class' => 'form-control',
-              'placeholder' => __('product.sku')]); !!}
+            <div class="input-group">
+              {!! Form::text('sku', null, ['class' => 'form-control', 'id' => 'sku', 'placeholder' => __('product.sku')]); !!}
+              <span class="input-group-btn">
+                <button type="button" class="btn btn-default bg-white btn-flat js-camera-scan-btn" data-input-target="#sku" title="Scan with camera"><i class="fa fa-camera text-primary fa-lg"></i></button>
+              </span>
+            </div>
           </div>
         </div>
         <div class="col-sm-4">
@@ -37,6 +41,7 @@
             <div class="input-group">
               {!! Form::text('barcode', null, ['class' => 'form-control', 'id' => 'barcode', 'placeholder' => 'Optional manual barcode']); !!}
               <span class="input-group-btn">
+                <button type="button" class="btn btn-default bg-white btn-flat js-camera-scan-btn" data-input-target="#barcode" title="Scan with camera"><i class="fa fa-camera text-primary fa-lg"></i></button>
                 <button type="button" class="btn btn-default js-generate-product-code" data-action="barcode">Generate</button>
               </span>
             </div>
@@ -48,6 +53,7 @@
             <div class="input-group">
               {!! Form::text('qr_code_value', null, ['class' => 'form-control', 'id' => 'qr_code_value', 'placeholder' => 'Optional manual QR value']); !!}
               <span class="input-group-btn">
+                <button type="button" class="btn btn-default bg-white btn-flat js-camera-scan-btn" data-input-target="#qr_code_value" title="Scan with camera"><i class="fa fa-camera text-primary fa-lg"></i></button>
                 <button type="button" class="btn btn-default js-generate-product-code" data-action="qr">Generate</button>
               </span>
             </div>
@@ -280,6 +286,8 @@
 
   </div><!-- /.modal-content -->
 </div><!-- /.modal-dialog -->
+
+@include('product.partials.camera_scan_modal')
 
 <script type="text/javascript">
   $(document).ready(function(){
