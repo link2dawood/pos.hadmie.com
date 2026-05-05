@@ -26,6 +26,7 @@
         padding: 0.04in 0.06in 0.03in;
         display: flex;
         flex-direction: column;
+        justify-content: center;
         overflow: hidden;
         text-align: center;
     }
@@ -80,7 +81,7 @@
     /* ── Codes section (fills all remaining vertical space) ─────── */
     .label-card__codes {
         margin-top: 2px;
-        flex: 1 1 0;
+        flex: 0 0 auto;
         display: flex;
         flex-direction: column;
         align-items: center;
