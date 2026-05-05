@@ -431,11 +431,26 @@
                     imageTimeout: 0,
                     logging: false,
                     onclone: function(clonedDoc) {
-                        // Kill entry animation + force full opacity so export captures the final state.
+                        // Apply print-like styling so PNG matches what gets printed:
+                        // exact paper width, no padding/shadows/animations.
                         clonedDoc.querySelectorAll('.label-sheet').forEach(function(s) {
                             s.style.animation = 'none';
                             s.style.opacity = '1';
                             s.style.transform = 'none';
+                            s.style.padding = '0';
+                            s.style.margin = '0';
+                            s.style.borderRadius = '0';
+                            s.style.boxShadow = 'none';
+                            s.style.maxWidth = 'none';
+                            s.style.overflow = 'hidden';
+                        });
+                        clonedDoc.querySelectorAll('.label-sheet__cell').forEach(function(c) {
+                            c.style.padding = '0';
+                        });
+                        clonedDoc.querySelectorAll('.label-sheet__table').forEach(function(t) {
+                            t.style.borderCollapse = 'collapse';
+                            t.style.borderSpacing = '0';
+                            t.style.margin = '0';
                         });
                     }
                 }).then(function(canvas) {
