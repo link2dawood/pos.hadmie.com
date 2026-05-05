@@ -33,11 +33,11 @@
 					<button type="button" class="btn btn-default bg-white btn-flat" data-toggle="modal" data-target="#configure_search_modal" title="{{__('lang_v1.configure_product_search')}}"><i class="fas fa-search-plus"></i></button>
 				</div>
                 {{-- Removed mousetrap class as it was causing issue with barcode scanning --}}
-				{!! Form::text('search_product', null, ['class' => 'form-control', 'id' => 'search_product', 'placeholder' => __('lang_v1.search_product_placeholder'),
-				'disabled' => is_null($default_location)? true : false,
-				'autofocus' => is_null($default_location)? false : true,
-				]); !!}
-				<span class="input-group-btn">
+					{!! Form::text('search_product', null, ['class' => 'form-control', 'id' => 'search_product', 'placeholder' => 'Scan Barcode / QR / Enter product Name / SKU',
+					'disabled' => is_null($default_location)? true : false,
+					'autofocus' => is_null($default_location)? false : true,
+					]); !!}
+					<span class="input-group-btn">
 
 					<!-- Show button for weighing scale modal -->
 					@if(isset($pos_settings['enable_weighing_scale']) && $pos_settings['enable_weighing_scale'] == 1)
@@ -46,12 +46,13 @@
 					@endif
 					
 
-					<button type="button" class="btn btn-default bg-white btn-flat pos_add_quick_product" data-href="{{action([\App\Http\Controllers\ProductController::class, 'quickAdd'])}}" data-container=".quick_add_product_modal"><i class="fa fa-plus-circle text-primary fa-lg"></i></button>
-				</span>
+						<button type="button" class="btn btn-default bg-white btn-flat pos_add_quick_product" data-href="{{action([\App\Http\Controllers\ProductController::class, 'quickAdd'])}}" data-container=".quick_add_product_modal"><i class="fa fa-plus-circle text-primary fa-lg"></i></button>
+						<button type="button" class="btn btn-default bg-white btn-flat" id="open_camera_scan_modal" data-toggle="modal" data-target="#pos_camera_scan_modal" title="Scan with camera" @if(is_null($default_location)) disabled @endif><i class="fa fa-camera text-primary fa-lg"></i></button>
+					</span>
+				</div>
 			</div>
 		</div>
 	</div>
-</div>
 <div class="row">
 	@if(!empty($pos_settings['show_invoice_layout']))
 	<div class="col-md-4">

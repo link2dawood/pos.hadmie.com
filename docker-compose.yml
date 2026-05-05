@@ -1,0 +1,57 @@
+services:
+  app:
+    image: poshadmiecom-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pos-hadmie-app
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8011:80"
+    restart: unless-stopped
+    volumes:
+      - ./:/var/www/html
+      - vendor_data:/var/www/html/vendor
+
+  db:
+    image: mysql:8.0
+    container_name: pos-hadmie-db
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_DATABASE: ultimate_pos
+      MYSQL_USER: ultimate_pos
+      MYSQL_PASSWORD: ultimate_pos
+      MYSQL_ROOT_PASSWORD: root
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    ports:
+      - "33061:3306"
+    restart: unless-stopped
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin:5-apache
+    container_name: pos-hadmie-phpmyadmin
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root
+      UPLOAD_LIMIT: 128M
+    ports:
+      - "8012:80"
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  vendor_data:

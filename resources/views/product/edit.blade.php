@@ -1,6 +1,14 @@
 @extends('layouts.app')
 @section('title', __('product.edit_product'))
 
+@section('css')
+    @include('labels.partials.label_card_styles')
+    <style>
+        /* Fix img-wrap heights for the edit-page label preview */
+        .js-edit-label-preview .label-card__img-wrap { overflow: hidden; }
+    </style>
+@endsection
+
 @section('content')
 
 @php
@@ -35,15 +43,86 @@
             <div class="col-sm-4">
               <div class="form-group">
                 {!! Form::label('sku', __('product.sku')  . ':*') !!} @show_tooltip(__('tooltip.sku'))
-                {!! Form::text('sku', $product->sku, ['class' => 'form-control',
-                'placeholder' => __('product.sku'), 'required']); !!}
+                <div class="input-group">
+                  {!! Form::text('sku', $product->sku, ['class' => 'form-control', 'id' => 'sku', 'placeholder' => __('product.sku'), 'required']); !!}
+                  <span class="input-group-btn">
+                    <button type="button" class="btn btn-default bg-white btn-flat js-camera-scan-btn" data-input-target="#sku" title="Scan with camera"><i class="fa fa-camera text-primary fa-lg"></i></button>
+                  </span>
+                </div>
               </div>
             </div>
 
             <div class="col-sm-4">
               <div class="form-group">
                 {!! Form::label('barcode_type', __('product.barcode_type') . ':*') !!}
-                  {!! Form::select('barcode_type', $barcode_types, $product->barcode_type, ['placeholder' => __('messages.please_select'), 'class' => 'form-control select2', 'required']); !!}
+                  {!! Form::select('barcode_type', $barcode_types, $product->barcode_type, ['placeholder' => __('messages.please_select'), 'class' => 'form-control select2', 'required', 'id' => 'barcode_type']); !!}
+              </div>
+            </div>
+
+            <div class="clearfix"></div>
+            <div class="col-sm-4">
+              <div class="form-group">
+                {!! Form::label('barcode', 'Barcode:') !!}
+                <div class="input-group">
+                  {!! Form::text('barcode', $product->barcode, ['class' => 'form-control', 'id' => 'barcode', 'placeholder' => 'Scan or enter barcode']); !!}
+                  <span class="input-group-btn">
+                    <button type="button" class="btn btn-default bg-white btn-flat js-camera-scan-btn" data-input-target="#barcode" title="Scan with camera"><i class="fa fa-camera text-primary fa-lg"></i></button>
+                    <button type="button" class="btn btn-default js-generate-product-code" data-action="barcode">Generate</button>
+                  </span>
+                </div>
+                <small class="help-block">Manual override stays saved as entered.</small>
+              </div>
+            </div>
+            <div class="col-sm-4">
+              <div class="form-group">
+                {!! Form::label('qr_code_value', 'QR code value:') !!}
+                <div class="input-group">
+                  {!! Form::text('qr_code_value', $product->qr_code_value, ['class' => 'form-control', 'id' => 'qr_code_value', 'placeholder' => 'Scan or enter QR value']); !!}
+                  <span class="input-group-btn">
+                    <button type="button" class="btn btn-default bg-white btn-flat js-camera-scan-btn" data-input-target="#qr_code_value" title="Scan with camera"><i class="fa fa-camera text-primary fa-lg"></i></button>
+                    <button type="button" class="btn btn-default js-generate-product-code" data-action="qr">Generate</button>
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-4">
+              <div class="well well-sm text-center" style="padding:8px;">
+                <strong style="display:block; margin-bottom:6px; font-size:12px;">Label Preview</strong>
+                @php
+                  $_edit_print = [
+                    'business_name'      => true,  'business_name_size' => 9,
+                    'name'               => true,  'name_size'          => 11,
+                    'variations'         => false, 'variations_size'    => 9,
+                    'price'              => true,  'price_size'         => 10,
+                    'price_type'         => 'inclusive',
+                    'barcode'            => !empty($product->barcode),
+                    'barcode_text'       => true,
+                    'qr_code'            => !empty($product->qr_code_value),
+                    'qr_text'            => false,
+                    'exp_date'           => false, 'packing_date' => false, 'lot_number' => false,
+                  ];
+                  $_edit_product = (object)[
+                    'product_actual_name'    => $product->name,
+                    'sub_sku'                => $product->variations->first()->sub_sku ?? null,
+                    'barcode'                => $product->barcode,
+                    'qr_code_value'          => $product->qr_code_value,
+                    'barcode_type'           => $product->barcode_type ?: 'C128',
+                    'sell_price_inc_tax'     => $product->variations->first()->sell_price_inc_tax ?? 0,
+                    'default_sell_price'     => $product->variations->first()->sell_price_inc_tax ?? 0,
+                    'is_dummy'               => 0,
+                    'product_variation_name' => null, 'variation_name' => null,
+                    'exp_date' => null, 'packing_date' => null, 'lot_number' => null,
+                  ];
+                @endphp
+                <div style="display:flex; justify-content:center;">
+                  @include('labels.partials.sticker', [
+                    'page_product'  => $_edit_product,
+                    'print'         => $_edit_print,
+                    'business_name' => session('business.name', ''),
+                    'card_width'    => '260px',
+                    'card_height'   => '130px',
+                  ])
+                </div>
               </div>
             </div>
 
@@ -378,10 +457,14 @@
 </section>
 <!-- /.content -->
 
+@include('product.partials.camera_scan_modal')
+
 @endsection
 
 @section('javascript')
   <script src="{{ asset('js/product.js?v=' . $asset_v) }}"></script>
+  <script src="{{ asset('js/html5-qrcode.min.js?v=' . $asset_v) }}"></script>
+  <script src="{{ asset('js/product_scanner.js?v=' . $asset_v) }}"></script>
   <script type="text/javascript">
     $(document).ready( function(){
       __page_leave_confirmation('#product_add_form');

@@ -183,6 +183,7 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     Route::get('/products/get_variation_value_row', [ProductController::class, 'getVariationValueRow']);
     Route::post('/products/check_product_sku', [ProductController::class, 'checkProductSku']);
     Route::post('/products/validate_variation_skus', [ProductController::class, 'validateVaritionSkus']); //validates multiple skus at once
+    Route::post('/products/generate-codes', [ProductController::class, 'generateCodes']);
     Route::get('/products/quick_add', [ProductController::class, 'quickAdd']);
     Route::post('/products/save_quick_product', [ProductController::class, 'saveQuickProduct']);
     Route::get('/products/get-combo-product-entry-row', [ProductController::class, 'getComboProductEntryRow']);
@@ -191,6 +192,7 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     Route::resource('products', ProductController::class);
     Route::get('/toggle-subscription/{id}', 'SellPosController@toggleRecurringInvoices');
     Route::post('/sells/pos/get-types-of-service-details', 'SellPosController@getTypesOfServiceDetails');
+    Route::post('/sells/pos/scan-lookup', [SellPosController::class, 'scanLookup']);
     Route::get('/sells/subscriptions', 'SellPosController@listSubscriptions');
     Route::get('/sells/duplicate/{id}', 'SellController@duplicateSell');
     Route::get('/sells/drafts', 'SellController@getDrafts');

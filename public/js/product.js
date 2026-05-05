@@ -1,6 +1,280 @@
 //This file contains all functions used products tab
 
 $(document).ready(function() {
+    var productCodePreviewTimer;
+
+    function escapeHtml(value) {
+        return $('<div/>').text(value || '').html();
+    }
+
+    function sanitizeFileName(value, fallbackValue) {
+        var normalized = String(value || '')
+            .trim()
+            .replace(/[^a-zA-Z0-9._-]+/g, '_')
+            .replace(/^_+|_+$/g, '');
+
+        return normalized || fallbackValue;
+    }
+
+    function resolveCurrentCodePrice() {
+        var fieldSelectors = [
+            'input#single_dsp_inc_tax:visible',
+            'input#single_dsp:visible',
+            'input.variable_dsp_inc_tax:visible:first',
+            'input.variable_dsp:visible:first',
+            'input#single_dsp_inc_tax',
+            'input#single_dsp',
+        ];
+
+        for (var i = 0; i < fieldSelectors.length; i++) {
+            var field = $(fieldSelectors[i]).first();
+            if (field.length) {
+                var value = $.trim(field.val() || '');
+                if (value !== '') {
+                    return value;
+                }
+            }
+        }
+
+        return '';
+    }
+
+    function resolveCurrentProductName() {
+        var nameField = $('#name').first();
+
+        return $.trim(nameField.val() || '') || 'Product';
+    }
+
+    function wrapCanvasText(ctx, text, maxWidth) {
+        var content = $.trim(text || '');
+        if (!content) {
+            return [];
+        }
+
+        var words = content.split(/\s+/);
+        var lines = [];
+        var currentLine = words.shift() || '';
+
+        while (words.length) {
+            var nextWord = words.shift();
+            var candidate = currentLine + ' ' + nextWord;
+            if (ctx.measureText(candidate).width <= maxWidth) {
+                currentLine = candidate;
+            } else {
+                lines.push(currentLine);
+                currentLine = nextWord;
+            }
+        }
+
+        if (currentLine) {
+            lines.push(currentLine);
+        }
+
+        return lines;
+    }
+
+    function buildCodeCardDataUrl(imageSrc, productName, priceValue, codeValue, callback) {
+        var image = new Image();
+        image.onload = function() {
+            var padding = 32;
+            var cardWidth = 760;
+            var contentWidth = cardWidth - (padding * 2);
+            var priceText = 'Price: ' + (priceValue || '--');
+            var skuText = $.trim(codeValue || '');
+            var imageMaxWidth = contentWidth;
+            var imageScale = Math.min(1, imageMaxWidth / image.width);
+            var drawnImageWidth = image.width * imageScale;
+            var drawnImageHeight = image.height * imageScale;
+            var canvas = document.createElement('canvas');
+            var ctx = canvas.getContext('2d');
+            var titleLineHeight = 38;
+            var priceLineHeight = 34;
+            var skuLineHeight = 28;
+            var name = String(productName || 'Product').toUpperCase();
+
+            ctx.font = 'bold 30px Arial';
+            var titleLines = wrapCanvasText(ctx, name, contentWidth);
+
+            var cardHeight = padding +
+                (titleLines.length * titleLineHeight) +
+                8 +
+                priceLineHeight +
+                18 +
+                drawnImageHeight +
+                (skuText ? skuLineHeight : 0) +
+                padding;
+
+            canvas.width = cardWidth;
+            canvas.height = cardHeight;
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, cardWidth, cardHeight);
+
+            ctx.strokeStyle = '#243b53';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(10, 10, cardWidth - 20, cardHeight - 20);
+
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#1d3557';
+            ctx.font = 'bold 30px Arial';
+
+            var currentY = padding + 28;
+            titleLines.forEach(function(line) {
+                ctx.fillText(line, cardWidth / 2, currentY);
+                currentY += titleLineHeight;
+            });
+
+            ctx.fillStyle = '#111111';
+            ctx.font = '28px Arial';
+            ctx.fillText(priceText, cardWidth / 2, currentY);
+
+            currentY += 18;
+
+            var imageX = (cardWidth - drawnImageWidth) / 2;
+            var imageY = currentY;
+            ctx.drawImage(image, imageX, imageY, drawnImageWidth, drawnImageHeight);
+
+            if (skuText) {
+                ctx.fillStyle = '#111111';
+                ctx.font = '24px Arial';
+                ctx.fillText(skuText, cardWidth / 2, imageY + drawnImageHeight + 24);
+            }
+
+            callback(canvas.toDataURL('image/png'));
+        };
+        image.onerror = function() {
+            // Image failed — draw the card with a text placeholder so name/price still print
+            var canvas = document.createElement('canvas');
+            var ctx = canvas.getContext('2d');
+            var padding = 32;
+            var cardWidth = 760;
+            var name = String(productName || 'Product').toUpperCase();
+            ctx.font = 'bold 30px Arial';
+            var titleLines = wrapCanvasText(ctx, name, cardWidth - padding * 2);
+            var cardHeight = padding + (titleLines.length * 38) + 8 + 34 + 60 + padding;
+            canvas.width = cardWidth;
+            canvas.height = cardHeight;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, cardWidth, cardHeight);
+            ctx.strokeStyle = '#243b53';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(10, 10, cardWidth - 20, cardHeight - 20);
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#1d3557';
+            ctx.font = 'bold 30px Arial';
+            var y = padding + 28;
+            titleLines.forEach(function(line) { ctx.fillText(line, cardWidth / 2, y); y += 38; });
+            ctx.fillStyle = '#111111';
+            ctx.font = '28px Arial';
+            ctx.fillText('Price: ' + (priceValue || '--'), cardWidth / 2, y);
+            y += 34;
+            ctx.fillStyle = '#888888';
+            ctx.font = '20px Arial';
+            ctx.fillText($.trim(codeValue || ''), cardWidth / 2, y);
+            callback(canvas.toDataURL('image/png'));
+        };
+        image.src = imageSrc;
+    }
+
+    function openCodePrintWindow(printWindow, imageSrc, productName, priceValue, codeValue) {
+        if (!printWindow || !imageSrc) {
+            return;
+        }
+
+        var safeTitle = escapeHtml(productName || 'Product Code');
+
+        buildCodeCardDataUrl(imageSrc, productName, priceValue, codeValue, function(cardDataUrl) {
+            // Use onload on the img so print() fires only after the image is rendered
+            printWindow.document.open();
+            printWindow.document.write(
+                '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + safeTitle + '</title>' +
+                '<style>body{margin:0;padding:24px;background:#eef2f7;font-family:Arial,sans-serif;text-align:center}' +
+                'img{max-width:100%;height:auto;box-shadow:0 18px 46px rgba(15,23,42,.12)}</style>' +
+                '</head><body><img src="' + cardDataUrl + '" alt="' + safeTitle + '" onload="window.print()"></body></html>'
+            );
+            printWindow.document.close();
+            printWindow.focus();
+        });
+    }
+
+    function renderProductCodePreview(config) {
+        var emptyHtml = '<small class="text-muted">' + config.emptyMessage + '</small>';
+        var html = emptyHtml;
+
+        if (config.imageSrc) {
+            html = '<div class="code-preview-block" style="border:2px solid #243b53;border-radius:18px;background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);padding:12px 10px;">' +
+                '<div style="font-size:16px;font-weight:800;color:#1d3557;line-height:1.1;text-transform:uppercase;">' + escapeHtml(config.productName || 'Product') + '</div>' +
+                '<div style="font-size:16px;color:#111111;margin-top:8px;"><span style="font-weight:500;">Price:</span> <strong>' + escapeHtml(config.priceValue || '--') + '</strong></div>' +
+                '<div style="margin-top:12px;"><img src="' + config.imageSrc + '" alt="' + escapeHtml(config.altText) + '" style="max-width: 100%;"></div>' +
+                (config.codeValue ? '<div class="small" style="margin-top:8px;color:#111111;word-break:break-all;">' + escapeHtml(config.codeValue) + '</div>' : '') +
+                '<div class="btn-group btn-group-xs" style="margin-top:8px;">' +
+                '<button type="button" class="btn btn-default js-download-generated-code" data-image-src="' + config.imageSrc + '" data-product-name="' + escapeHtml(config.productName || 'Product') + '" data-code-value="' + escapeHtml(config.codeValue || '') + '" data-price-value="' + escapeHtml(config.priceValue || '--') + '" data-download-name="' + escapeHtml(config.downloadName) + '"><i class="fa fa-download"></i> Download</button>' +
+                '<button type="button" class="btn btn-default js-print-generated-code" data-image-src="' + config.imageSrc + '" data-product-name="' + escapeHtml(config.productName || 'Product') + '" data-code-value="' + escapeHtml(config.codeValue || '') + '" data-price-value="' + escapeHtml(config.priceValue || '--') + '"><i class="fa fa-print"></i> Print</button>' +
+                '</div>' +
+                '</div>';
+        }
+
+        $(config.previewSelector).html(html);
+    }
+
+    function refreshProductCodePreview(action) {
+        if (!$('#barcode').length && !$('#qr_code_value').length) {
+            return;
+        }
+
+        $.ajax({
+            method: 'POST',
+            url: '/products/generate-codes',
+            dataType: 'json',
+            data: {
+                _token: $('input[name="_token"]').first().val(),
+                action: action || 'preview',
+                product_id: $('#product_id').val() || '',
+                sku: $('#sku').val(),
+                barcode: $('#barcode').val(),
+                qr_code_value: $('#qr_code_value').val(),
+                barcode_type: $('#barcode_type').val(),
+            },
+            success: function(response) {
+                if (!response.success) {
+                    return;
+                }
+
+                if (action === 'barcode' || action === 'sku') {
+                    $('#sku').val(response.sku);
+                    $('#barcode').val(response.barcode || '');
+                } else if (action === 'qr') {
+                    $('#qr_code_value').val(response.qr_code_value || '');
+                }
+
+                var currentPrice = resolveCurrentCodePrice();
+                var currentProductName = resolveCurrentProductName();
+                var skuForFileName = sanitizeFileName(response.sku, 'product_code');
+
+                renderProductCodePreview({
+                    previewSelector: '.js-product-barcode-preview',
+                    imageSrc: response.barcode_preview,
+                    emptyMessage: 'No barcode yet',
+                    altText: 'Barcode preview',
+                    codeValue: response.barcode || $('#barcode').val(),
+                    productName: currentProductName,
+                    priceValue: currentPrice,
+                    downloadName: 'barcode_' + skuForFileName + '.png',
+                });
+                renderProductCodePreview({
+                    previewSelector: '.js-product-qr-preview',
+                    imageSrc: response.qr_preview,
+                    emptyMessage: 'No QR yet',
+                    altText: 'QR preview',
+                    codeValue: response.qr_code_value || $('#qr_code_value').val(),
+                    productName: currentProductName,
+                    priceValue: currentPrice,
+                    downloadName: 'qrcode_' + skuForFileName + '.png',
+                });
+            },
+        });
+    }
+
     $(document).on('ifChecked', 'input#enable_stock', function() {
         $('div#alert_quantity_div').show();
         $('div#quick_product_opening_stock_div').show();
@@ -247,6 +521,63 @@ $(document).ready(function() {
             }
         }
         
+    });
+
+    $(document).on('click', '.js-generate-product-code', function(e) {
+        e.preventDefault();
+        refreshProductCodePreview($(this).data('action'));
+    });
+
+    $(document).on('input change', '#sku, #barcode, #qr_code_value, #barcode_type', function() {
+        clearTimeout(productCodePreviewTimer);
+        productCodePreviewTimer = setTimeout(function() {
+            refreshProductCodePreview('preview');
+        }, 250);
+    });
+
+    $(document).on('input change', '#single_dsp, #single_dsp_inc_tax, .variable_dsp, .variable_dsp_inc_tax, #tax_type', function() {
+        clearTimeout(productCodePreviewTimer);
+        productCodePreviewTimer = setTimeout(function() {
+            refreshProductCodePreview('preview');
+        }, 250);
+    });
+
+    $(document).on('click', '.js-print-generated-code', function(e) {
+        e.preventDefault();
+        var button = $(this);
+        // Open the popup NOW (inside the click handler = user-gesture context) so popup
+        // blockers don't interfere. The window is populated asynchronously after.
+        var printWindow = window.open('', '_blank', 'width=900,height=700');
+        if (!printWindow) {
+            toastr.error('Please allow popups to print the code.');
+            return;
+        }
+        openCodePrintWindow(
+            printWindow,
+            button.attr('data-image-src'),
+            button.attr('data-product-name'),
+            button.attr('data-price-value'),
+            button.attr('data-code-value')
+        );
+    });
+
+    $(document).on('click', '.js-download-generated-code', function(e) {
+        e.preventDefault();
+        var button = $(this);
+        buildCodeCardDataUrl(
+            button.attr('data-image-src'),
+            button.attr('data-product-name'),
+            button.attr('data-price-value'),
+            button.attr('data-code-value'),
+            function(cardDataUrl) {
+                var link = document.createElement('a');
+                link.href = cardDataUrl;
+                link.download = button.attr('data-download-name') || 'product_code.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        );
     });
     //End for product type single
 
@@ -496,6 +827,16 @@ $(document).ready(function() {
                 }
             }
         });
+    });
+
+    if ($('#barcode').length || $('#qr_code_value').length) {
+        refreshProductCodePreview('preview');
+    }
+
+    $(document).on('shown.bs.modal', '.quick_add_product_modal', function() {
+        if ($(this).find('#barcode').length || $(this).find('#qr_code_value').length) {
+            refreshProductCodePreview('preview');
+        }
     });
 
     //If tax rate is changed

@@ -106,6 +106,8 @@ class InvoiceLayoutController extends Controller
             if (! empty($request->input('table_tax_headings'))) {
                 $input['table_tax_headings'] = json_encode($request->input('table_tax_headings'));
             }
+            $input['common_settings'] = $this->prepareCommonSettings($request->input('common_settings'), $request->input('design'));
+            $input['design'] = $this->resolveLegacyDesign($request->input('design'), $input['common_settings']);
             $input['product_custom_fields'] = ! empty($request->input('product_custom_fields')) ? $request->input('product_custom_fields') : null;
             $input['contact_custom_fields'] = ! empty($request->input('contact_custom_fields')) ? $request->input('contact_custom_fields') : null;
             $input['location_custom_fields'] = ! empty($request->input('location_custom_fields')) ? $request->input('location_custom_fields') : null;
@@ -227,7 +229,9 @@ class InvoiceLayoutController extends Controller
             $input['product_custom_fields'] = ! empty($request->input('product_custom_fields')) ? json_encode($request->input('product_custom_fields')) : null;
             $input['contact_custom_fields'] = ! empty($request->input('contact_custom_fields')) ? json_encode($request->input('contact_custom_fields')) : null;
             $input['location_custom_fields'] = ! empty($request->input('location_custom_fields')) ? json_encode($request->input('location_custom_fields')) : null;
-            $input['common_settings'] = ! empty($request->input('common_settings')) ? json_encode($request->input('common_settings')) : null;
+            $preparedCommonSettings = $this->prepareCommonSettings($request->input('common_settings'), $request->input('design'));
+            $input['common_settings'] = ! empty($preparedCommonSettings) ? json_encode($preparedCommonSettings) : null;
+            $input['design'] = $this->resolveLegacyDesign($request->input('design'), $preparedCommonSettings);
             $input['qr_code_fields'] = ! empty($request->input('qr_code_fields')) ? json_encode($request->input('qr_code_fields')) : null;
 
             InvoiceLayout::where('id', $id)
@@ -256,5 +260,79 @@ class InvoiceLayoutController extends Controller
             'slim' => __('lang_v1.slim').' ('.__('lang_v1.recomended_for_80mm').')',
             'slim2' => __('lang_v1.slim').' 2 ('.__('lang_v1.recomended_for_58mm').')',
         ];
+    }
+
+    private function prepareCommonSettings(?array $commonSettings, ?string $legacyDesign = null): array
+    {
+        $commonSettings = is_array($commonSettings) ? $commonSettings : [];
+        $printSettings = data_get($commonSettings, 'print', []);
+        $printSettings = is_array($printSettings) ? $printSettings : [];
+
+        $paperSize = $printSettings['paper_size'] ?? 'auto';
+        $standardTemplate = $printSettings['standard_template'] ?? 'ledger';
+        $thermalTemplate = $printSettings['thermal_template'] ?? 'clean';
+        $defaultSections = [
+            'notes' => 0,
+            'terms' => 0,
+            'signatures' => 0,
+            'codes' => 0,
+            'footer' => 0,
+        ];
+        $defaultDocuments = [
+            'invoice' => ['prices' => 1, 'tax' => 1, 'totals' => 1, 'notes' => 1, 'signatures' => 0, 'recipient_shipping' => 1],
+            'delivery_note' => ['prices' => 0, 'tax' => 0, 'totals' => 0, 'notes' => 0, 'signatures' => 1, 'recipient_shipping' => 1],
+            'packing_slip' => ['prices' => 0, 'tax' => 0, 'totals' => 0, 'notes' => 0, 'signatures' => 0, 'recipient_shipping' => 1],
+            'quotation' => ['prices' => 1, 'tax' => 1, 'totals' => 1, 'notes' => 1, 'signatures' => 0, 'recipient_shipping' => 1],
+            'sale_order' => ['prices' => 1, 'tax' => 1, 'totals' => 1, 'notes' => 1, 'signatures' => 0, 'recipient_shipping' => 1],
+            'purchase_order' => ['prices' => 1, 'tax' => 1, 'totals' => 1, 'notes' => 1, 'signatures' => 0, 'recipient_shipping' => 1],
+        ];
+
+        $printSettings['sections'] = array_replace($defaultSections, is_array($printSettings['sections'] ?? null) ? $printSettings['sections'] : []);
+        $documents = is_array($printSettings['documents'] ?? null) ? $printSettings['documents'] : [];
+        foreach ($defaultDocuments as $documentKey => $documentDefaults) {
+            $printSettings['documents'][$documentKey] = array_replace(
+                $documentDefaults,
+                is_array($documents[$documentKey] ?? null) ? $documents[$documentKey] : []
+            );
+        }
+
+        if (empty($printSettings['template_variant'])) {
+            $printSettings['template_variant'] = in_array($paperSize, ['thermal-80', 'thermal-58'], true)
+                ? $thermalTemplate
+                : $standardTemplate;
+        }
+
+        $printSettings['paper_size'] = $paperSize;
+        $printSettings['standard_template'] = $standardTemplate;
+        $printSettings['thermal_template'] = $thermalTemplate;
+        $printSettings['legacy_design'] = $legacyDesign ?: ($printSettings['legacy_design'] ?? 'classic');
+
+        if (isset($printSettings['section_order']) && is_string($printSettings['section_order'])) {
+            $printSettings['section_order'] = implode(',', array_values(array_filter(array_map('trim', explode(',', $printSettings['section_order'])))));
+        }
+
+        $commonSettings['print'] = $printSettings;
+
+        return $commonSettings;
+    }
+
+    private function resolveLegacyDesign(?string $design, array $commonSettings): string
+    {
+        $paperSize = data_get($commonSettings, 'print.paper_size');
+        $design = $design ?: 'classic';
+
+        if ($paperSize === 'thermal-80') {
+            return 'slim';
+        }
+
+        if ($paperSize === 'thermal-58') {
+            return 'slim2';
+        }
+
+        if ($paperSize === 'a4' && ! in_array($design, ['classic', 'elegant', 'detailed', 'columnize-taxes', 'elegant_modified'], true)) {
+            return 'classic';
+        }
+
+        return $design;
     }
 }

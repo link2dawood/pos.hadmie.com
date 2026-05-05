@@ -69,9 +69,9 @@
 
 							<div class="input-group">
       							<div class="input-group-addon"><b>@lang( 'lang_v1.size' )</b></div>
-								<input type="text" class="form-control" 
-									name="print[name_size]" 
-									value="15">
+								<input type="text" class="form-control"
+									name="print[name_size]"
+									value="11">
 							</div>
 						</td>
 
@@ -84,9 +84,9 @@
 
 							<div class="input-group">
       							<div class="input-group-addon"><b>@lang( 'lang_v1.size' )</b></div>
-								<input type="text" class="form-control" 
-									name="print[variations_size]" 
-									value="17">
+								<input type="text" class="form-control"
+									name="print[variations_size]"
+									value="9">
 							</div>
 						</td>
 
@@ -99,9 +99,9 @@
 
 							<div class="input-group">
       							<div class="input-group-addon"><b>@lang( 'lang_v1.size' )</b></div>
-								<input type="text" class="form-control" 
-									name="print[price_size]" 
-									value="17">
+								<input type="text" class="form-control"
+									name="print[price_size]"
+									value="10">
 							</div>
 
 						</td>
@@ -133,9 +133,9 @@
 
 							<div class="input-group">
       							<div class="input-group-addon"><b>@lang( 'lang_v1.size' )</b></div>
-								<input type="text" class="form-control" 
-									name="print[business_name_size]" 
-									value="20">
+								<input type="text" class="form-control"
+									name="print[business_name_size]"
+									value="9">
 							</div>
 						</td>
 
@@ -188,6 +188,36 @@
 								</div>
 							@endif
 						</td>						
+					</tr>
+					<tr>
+						<td>
+							<div class="checkbox">
+							    <label>
+							    	<input type="checkbox" checked name="print[barcode]" value="1"> <b>Print barcode</b>
+							    </label>
+							</div>
+							<div class="checkbox">
+							    <label>
+							    	<input type="checkbox" checked name="print[barcode_text]" value="1"> Show barcode text
+							    </label>
+							</div>
+						</td>
+
+						<td>
+							<div class="checkbox">
+							    <label>
+							    	<input type="checkbox" name="print[qr_code]" value="1"> <b>Print QR code</b>
+							    </label>
+							</div>
+							<div class="checkbox">
+							    <label>
+							    	<input type="checkbox" checked name="print[qr_text]" value="1"> Show QR text
+							    </label>
+							</div>
+						</td>
+
+						<td></td>
+						<td></td>
 					</tr>
 					<tr>
 						

@@ -5,11 +5,83 @@
 		      <h4 class="modal-title" id="modalTitle">{{$product->name}}</h4>
 	    </div>
 	    <div class="modal-body">
-      		<div class="row">
-      			<div class="col-sm-9">
-	      			<div class="col-sm-4 invoice-col">
-	      				<b>@lang('product.sku'):</b>
-						{{$product->sku }}<br>
+	    	@php
+	    		$primary_variation = $product->variations->first();
+	    		$code_price_value = !empty($primary_variation) ? $primary_variation->sell_price_inc_tax : null;
+
+	    		$qr_scan_value     = (!empty($primary_variation) && !empty($primary_variation->sub_sku))
+	    			? $primary_variation->sub_sku
+	    			: ($product->qr_code_value ?? $product->sku);
+	    		$barcode_scan_value = !empty($product->barcode) ? $product->barcode : $qr_scan_value;
+	    		$download_safe_sku  = preg_replace('/[^A-Za-z0-9._-]+/', '_', $product->sku ?? ('product_'.$product->id));
+
+	    		// Build a synthetic $print and $page_product for the shared sticker partial.
+	    		$_modal_print = [
+	    			'business_name'      => true,
+	    			'business_name_size' => 9,
+	    			'name'               => true,
+	    			'name_size'          => 11,
+	    			'variations'         => false,
+	    			'variations_size'    => 9,
+	    			'price'              => !is_null($code_price_value),
+	    			'price_size'         => 10,
+	    			'price_type'         => 'inclusive',
+	    			'barcode'            => !empty($barcode_scan_value),
+	    			'barcode_text'       => true,
+	    			'qr_code'            => !empty($qr_scan_value),
+	    			'qr_text'            => false,
+	    			'exp_date'           => false,
+	    			'packing_date'       => false,
+	    			'lot_number'         => false,
+	    		];
+	    		$_modal_product = (object)[
+	    			'product_actual_name'    => $product->name,
+	    			'sub_sku'                => $primary_variation->sub_sku ?? null,
+	    			'barcode'                => $product->barcode,
+	    			'qr_code_value'          => $product->qr_code_value,
+	    			'barcode_type'           => $product->barcode_type ?: 'C128',
+	    			'sell_price_inc_tax'     => $code_price_value,
+	    			'default_sell_price'     => $code_price_value,
+	    			'is_dummy'               => 0,
+	    			'product_variation_name' => null,
+	    			'variation_name'         => null,
+	    			'exp_date'               => null,
+	    			'packing_date'           => null,
+	    			'lot_number'             => null,
+	    		];
+	    	@endphp
+
+	    	{{-- Inject label card styles for this AJAX-loaded modal --}}
+	    	@include('labels.partials.label_card_styles')
+	    	<style>
+	    		.modal-label-preview { display:flex; justify-content:center; padding:12px 0 8px; }
+	    		.modal-label-actions { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-bottom:10px; }
+	    	</style>
+
+	      		<div class="row">
+	      			<div class="col-sm-9">
+	      				<div class="col-sm-4 invoice-col">
+	      					<b>@lang('product.sku'):</b> {{$product->sku }}<br>
+						<b>Barcode:</b> {{$product->barcode ?? '--' }}<br>
+						<b>QR value:</b> {{$product->qr_code_value ?? '--' }}<br>
+
+	      					{{-- Label card preview (shared sticker partial) --}}
+	      					<div class="modal-label-preview">
+	      						@include('labels.partials.sticker', [
+	      							'page_product'  => $_modal_product,
+	      							'print'         => $_modal_print,
+	      							'business_name' => session('business.name', ''),
+	      							'card_width'    => '280px',
+	      							'card_height'   => '140px',
+	      						])
+	      					</div>
+
+	      					<div class="modal-label-actions no-print">
+								<a href="{{ url('/labels/show?product_id=' . $product->id) }}" target="_blank" class="btn btn-default btn-xs">
+									<i class="fa fa-tag"></i> Print Label Sheet
+								</a>
+	      					</div>
+
 						<b>@lang('product.brand'): </b>
 						{{$product->brand->name ?? '--' }}<br>
 						<b>@lang('product.unit'): </b>

@@ -25,6 +25,7 @@ use Excel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Yajra\DataTables\Facades\DataTables;
 use App\Events\ProductsCreatedOrModified;
 use App\TransactionSellLine;
@@ -444,9 +445,10 @@ class ProductController extends Controller
         if (! auth()->user()->can('product.create')) {
             abort(403, 'Unauthorized action.');
         }
+        $business_id = $request->session()->get('user.business_id');
+        $code_fields = $this->validatedProductCodeFields($request, $business_id);
         try {
-            $business_id = $request->session()->get('user.business_id');
-            $form_fields = ['name', 'brand_id', 'unit_id', 'category_id', 'tax', 'type', 'barcode_type', 'sku', 'alert_quantity', 'tax_type', 'weight', 'product_description', 'sub_unit_ids', 'preparation_time_in_minutes', 'product_custom_field1', 'product_custom_field2', 'product_custom_field3', 'product_custom_field4', 'product_custom_field5', 'product_custom_field6', 'product_custom_field7', 'product_custom_field8', 'product_custom_field9', 'product_custom_field10', 'product_custom_field11', 'product_custom_field12', 'product_custom_field13', 'product_custom_field14', 'product_custom_field15', 'product_custom_field16', 'product_custom_field17', 'product_custom_field18', 'product_custom_field19', 'product_custom_field20',];
+            $form_fields = ['name', 'brand_id', 'unit_id', 'category_id', 'tax', 'type', 'barcode_type', 'barcode', 'qr_code_value', 'sku', 'alert_quantity', 'tax_type', 'weight', 'product_description', 'sub_unit_ids', 'preparation_time_in_minutes', 'product_custom_field1', 'product_custom_field2', 'product_custom_field3', 'product_custom_field4', 'product_custom_field5', 'product_custom_field6', 'product_custom_field7', 'product_custom_field8', 'product_custom_field9', 'product_custom_field10', 'product_custom_field11', 'product_custom_field12', 'product_custom_field13', 'product_custom_field14', 'product_custom_field15', 'product_custom_field16', 'product_custom_field17', 'product_custom_field18', 'product_custom_field19', 'product_custom_field20',];
 
             $module_form_fields = $this->moduleUtil->getModuleFormField('product_form_fields');
             if (! empty($module_form_fields)) {
@@ -456,6 +458,9 @@ class ProductController extends Controller
             $product_details = $request->only($form_fields);
             $product_details['business_id'] = $business_id;
             $product_details['created_by'] = $request->session()->get('user.id');
+            $product_details['barcode_type'] = $code_fields['barcode_type'];
+            $product_details['barcode'] = $code_fields['barcode'];
+            $product_details['qr_code_value'] = $code_fields['qr_code_value'];
 
             $product_details['enable_stock'] = (! empty($request->input('enable_stock')) && $request->input('enable_stock') == 1) ? 1 : 0;
             $product_details['not_for_selling'] = (! empty($request->input('not_for_selling')) && $request->input('not_for_selling') == 1) ? 1 : 0;
@@ -675,10 +680,11 @@ class ProductController extends Controller
         if (! auth()->user()->can('product.update')) {
             abort(403, 'Unauthorized action.');
         }
+        $business_id = $request->session()->get('user.business_id');
+        $code_fields = $this->validatedProductCodeFields($request, $business_id, (int) $id);
 
         try {
-            $business_id = $request->session()->get('user.business_id');
-            $product_details = $request->only(['name', 'brand_id', 'unit_id', 'category_id', 'tax', 'barcode_type', 'sku', 'alert_quantity', 'tax_type', 'weight', 'product_description', 'sub_unit_ids', 'preparation_time_in_minutes', 'product_custom_field1', 'product_custom_field2', 'product_custom_field3', 'product_custom_field4', 'product_custom_field5', 'product_custom_field6', 'product_custom_field7', 'product_custom_field8', 'product_custom_field9', 'product_custom_field10', 'product_custom_field11', 'product_custom_field12', 'product_custom_field13', 'product_custom_field14', 'product_custom_field15', 'product_custom_field16', 'product_custom_field17', 'product_custom_field18', 'product_custom_field19', 'product_custom_field20',]);
+            $product_details = $request->only(['name', 'brand_id', 'unit_id', 'category_id', 'tax', 'barcode_type', 'barcode', 'qr_code_value', 'sku', 'alert_quantity', 'tax_type', 'weight', 'product_description', 'sub_unit_ids', 'preparation_time_in_minutes', 'product_custom_field1', 'product_custom_field2', 'product_custom_field3', 'product_custom_field4', 'product_custom_field5', 'product_custom_field6', 'product_custom_field7', 'product_custom_field8', 'product_custom_field9', 'product_custom_field10', 'product_custom_field11', 'product_custom_field12', 'product_custom_field13', 'product_custom_field14', 'product_custom_field15', 'product_custom_field16', 'product_custom_field17', 'product_custom_field18', 'product_custom_field19', 'product_custom_field20',]);
 
             DB::beginTransaction();
 
@@ -699,7 +705,9 @@ class ProductController extends Controller
             $product->unit_id = $product_details['unit_id'];
             $product->category_id = $product_details['category_id'];
             $product->tax = $product_details['tax'];
-            $product->barcode_type = $product_details['barcode_type'];
+            $product->barcode_type = $code_fields['barcode_type'];
+            $product->barcode = $code_fields['barcode'];
+            $product->qr_code_value = $code_fields['qr_code_value'];
             $product->sku = $product_details['sku'];
             $product->alert_quantity = ! empty($product_details['alert_quantity']) ? $this->productUtil->num_uf($product_details['alert_quantity']) : $product_details['alert_quantity'];
             $product->tax_type = $product_details['tax_type'];
@@ -1454,10 +1462,11 @@ class ProductController extends Controller
         if (! auth()->user()->can('product.create')) {
             abort(403, 'Unauthorized action.');
         }
+        $business_id = $request->session()->get('user.business_id');
+        $code_fields = $this->validatedProductCodeFields($request, $business_id);
 
         try {
-            $business_id = $request->session()->get('user.business_id');
-            $form_fields = ['name', 'brand_id', 'unit_id', 'category_id', 'tax', 'barcode_type', 'tax_type', 'sku',
+            $form_fields = ['name', 'brand_id', 'unit_id', 'category_id', 'tax', 'barcode_type', 'barcode', 'qr_code_value', 'tax_type', 'sku',
                 'alert_quantity', 'type', 'sub_unit_ids', 'sub_category_id', 'weight', 'product_description', 'product_custom_field1', 'product_custom_field2', 'product_custom_field3', 'product_custom_field4', 'product_custom_field5', 'product_custom_field6', 'product_custom_field7', 'product_custom_field8', 'product_custom_field9', 'product_custom_field10', 'product_custom_field11', 'product_custom_field12', 'product_custom_field13', 'product_custom_field14', 'product_custom_field15', 'product_custom_field16', 'product_custom_field17', 'product_custom_field18', 'product_custom_field19', 'product_custom_field20'];
 
             $module_form_fields = $this->moduleUtil->getModuleData('product_form_fields');
@@ -1469,6 +1478,9 @@ class ProductController extends Controller
                 }
             }
             $product_details = $request->only($form_fields);
+            $product_details['barcode_type'] = $code_fields['barcode_type'];
+            $product_details['barcode'] = $code_fields['barcode'];
+            $product_details['qr_code_value'] = $code_fields['qr_code_value'];
 
             $product_details['type'] = empty($product_details['type']) ? 'single' : $product_details['type'];
             $product_details['business_id'] = $business_id;
@@ -1555,6 +1567,49 @@ class ProductController extends Controller
         }
 
         return $output;
+    }
+
+    public function generateCodes(Request $request)
+    {
+        $business_id = $request->session()->get('user.business_id');
+
+        $request->validate([
+            'action' => ['nullable', Rule::in(['preview', 'barcode', 'qr', 'sku'])],
+            'barcode_type' => ['nullable', Rule::in(array_keys($this->barcode_types))],
+        ]);
+
+        $action = $request->input('action', 'preview');
+        $product_id = $request->input('product_id');
+        $sku = trim((string) $request->input('sku', ''));
+        $barcode = $this->normalizeProductCode($request->input('barcode'));
+        $qr_code_value = $this->normalizeQrCodeValue($request->input('qr_code_value'));
+        $barcode_type = $request->input('barcode_type', 'C128') ?: 'C128';
+
+        if (($action === 'sku' || $action === 'barcode') && $sku === '') {
+            $sku = $this->suggestProductSku($business_id, $product_id);
+        }
+
+        if ($action === 'barcode') {
+            $barcode = $sku !== '' ? $sku : $barcode;
+        }
+
+        if ($action === 'qr' && empty($qr_code_value)) {
+            $qr_code_value = $barcode ?: $sku;
+        }
+
+        return response()->json([
+            'success' => true,
+            'sku' => $sku,
+            'barcode_type' => $barcode_type,
+            'barcode' => $barcode,
+            'qr_code_value' => $qr_code_value,
+            'barcode_preview' => ! empty($barcode)
+                ? 'data:image/png;base64,'.\DNS1D::getBarcodePNG($barcode, $barcode_type, 2, 60, [17, 24, 39], true)
+                : null,
+            'qr_preview' => ! empty($qr_code_value)
+                ? 'data:image/png;base64,'.\DNS2D::getBarcodePNG($qr_code_value, 'QRCODE', 6, 6, [17, 24, 39])
+                : null,
+        ]);
     }
 
     /**
@@ -2024,6 +2079,69 @@ class ProductController extends Controller
         }
 
         return $this->respond($variations);
+    }
+
+    protected function validatedProductCodeFields(Request $request, int $business_id, ?int $product_id = null): array
+    {
+        $validated = $request->validate([
+            'barcode_type' => ['nullable', Rule::in(array_keys($this->barcode_types))],
+            'barcode' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('products', 'barcode')
+                    ->where(function ($query) use ($business_id) {
+                        return $query->where('business_id', $business_id);
+                    })
+                    ->ignore($product_id),
+            ],
+            'qr_code_value' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('products', 'qr_code_value')
+                    ->where(function ($query) use ($business_id) {
+                        return $query->where('business_id', $business_id);
+                    })
+                    ->ignore($product_id),
+            ],
+        ]);
+
+        return [
+            'barcode_type' => $validated['barcode_type'] ?? 'C128',
+            'barcode' => $this->normalizeProductCode($validated['barcode'] ?? null),
+            'qr_code_value' => $this->normalizeQrCodeValue($validated['qr_code_value'] ?? null),
+        ];
+    }
+
+    protected function normalizeProductCode($value): ?string
+    {
+        $normalized = trim((string) $value);
+
+        return $normalized === '' ? null : $normalized;
+    }
+
+    protected function normalizeQrCodeValue($value): ?string
+    {
+        $normalized = trim((string) $value);
+
+        return $normalized === '' ? null : $normalized;
+    }
+
+    protected function suggestProductSku(int $business_id, $product_id = null): string
+    {
+        if (! empty($product_id)) {
+            $product = Product::where('business_id', $business_id)->find($product_id);
+            if (! empty($product) && trim((string) $product->sku) !== '') {
+                return trim((string) $product->sku);
+            }
+
+            return $this->productUtil->generateProductSku($product_id);
+        }
+
+        $next_id = ((int) Product::max('id')) + 1;
+
+        return $this->productUtil->generateProductSku($next_id);
     }
 
     /**
