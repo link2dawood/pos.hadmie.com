@@ -468,18 +468,6 @@
   <script type="text/javascript">
     $(document).ready( function(){
       __page_leave_confirmation('#product_add_form');
-
-      // Fix img-wrap heights in the label preview card
-      setTimeout(function() {
-        document.querySelectorAll('.label-card__code').forEach(function(code) {
-          var wrap = code.querySelector('.label-card__img-wrap');
-          if (!wrap) return;
-          var h = code.getBoundingClientRect().height;
-          var t = code.querySelector('.label-card__code-text');
-          var th = t ? t.getBoundingClientRect().height + 2 : 0;
-          if (h - th > 0) { wrap.style.height = (h - th) + 'px'; wrap.style.flex = 'none'; }
-        });
-      }, 100);
     });
   </script>
 @endsection

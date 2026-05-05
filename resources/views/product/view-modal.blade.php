@@ -56,22 +56,7 @@
 	    	<style>
 	    		.modal-label-preview { display:flex; justify-content:center; padding:12px 0 8px; }
 	    		.modal-label-actions { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-bottom:10px; }
-	    		/* Fix img-wrap heights inside the modal card */
 	    	</style>
-	    	<script>
-	    		document.addEventListener('DOMContentLoaded', function() {
-	    			setTimeout(function() {
-	    				document.querySelectorAll('.modal-label-preview .label-card__code').forEach(function(code) {
-	    					var wrap = code.querySelector('.label-card__img-wrap');
-	    					if (!wrap) return;
-	    					var h = code.getBoundingClientRect().height;
-	    					var t = code.querySelector('.label-card__code-text');
-	    					var th = t ? t.getBoundingClientRect().height + 2 : 0;
-	    					if (h - th > 0) { wrap.style.height = (h - th) + 'px'; wrap.style.flex = 'none'; }
-	    				});
-	    			}, 80);
-	    		});
-	    	</script>
 
 	      		<div class="row">
 	      			<div class="col-sm-9">
