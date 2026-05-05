@@ -120,15 +120,14 @@
         align-self: center;
     }
 
-    /* Barcode wrapper: hugs the image — no padding above/below the bars. */
+    /* Barcode wrapper: fills remaining space below text so the card has no empty bottom area. */
     .label-card__img-wrap--barcode {
         width: 100%;
-        height: auto;
-        flex: none;
+        flex: 1 1 auto;
+        min-height: 0.4in;
         align-self: center;
-        position: static;
+        position: relative;
         overflow: hidden;
-        line-height: 0;
     }
 
     .label-card__qr-image {
@@ -138,13 +137,11 @@
         object-fit: fill;
     }
 
-    /* Barcode: renders at natural aspect — no padding, sharp bars for scanners. */
+    /* Barcode: fills wrapper preserving aspect; pixelated rendering keeps bar edges sharp = scannable. */
     .label-card__barcode-image {
-        position: static;
-        display: block;
-        width: 100%;
-        height: auto;
-        max-height: 0.6in;
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
         object-fit: contain;
         image-rendering: -moz-crisp-edges;
         image-rendering: -webkit-crisp-edges;
