@@ -27,27 +27,28 @@
         $barcode_type = 'C128';
     }
 
-    // Generate barcode PNG — height 60 keeps bars short. Width multiplier scales down for long SKUs.
+    // Generate hi-res barcode PNG — large w_mult + tall bars produce a crisp source image so
+    // browser/html2canvas scaling never produces gray fractional-pixel artefacts.
     $barcode_img = null;
     if (!empty($barcode_value)) {
         $len = strlen($barcode_value);
-        $w_mult = $len <= 12 ? 3 : ($len <= 18 ? 2 : ($len <= 26 ? 2 : 1));
+        $w_mult = $len <= 12 ? 10 : ($len <= 20 ? 8 : 6);
         try {
-            $barcode_img = DNS1D::getBarcodePNG($barcode_value, $barcode_type, $w_mult, 60, [0, 0, 0], false);
+            $barcode_img = DNS1D::getBarcodePNG($barcode_value, $barcode_type, $w_mult, 240, [0, 0, 0], false);
         } catch (\Throwable $e) {
             try {
-                $barcode_img = DNS1D::getBarcodePNG($barcode_value, 'C128', $w_mult, 60, [0, 0, 0], false);
+                $barcode_img = DNS1D::getBarcodePNG($barcode_value, 'C128', $w_mult, 240, [0, 0, 0], false);
             } catch (\Throwable $e2) {
                 $barcode_img = null;
             }
         }
     }
 
-    // QRCODE,M = medium error correction — more tolerant when CSS stretches it to fill the label rectangle.
+    // QRCODE,M with high pixel-per-module so scaling stays crisp.
     $qr_img = null;
     if (!empty($qr_value)) {
         try {
-            $qr_img = DNS2D::getBarcodePNG($qr_value, 'QRCODE,M', 8, 8, [0, 0, 0]);
+            $qr_img = DNS2D::getBarcodePNG($qr_value, 'QRCODE,M', 20, 20, [0, 0, 0]);
         } catch (\Throwable $e) {
             $qr_img = null;
         }
