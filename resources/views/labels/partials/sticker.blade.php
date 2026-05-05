@@ -27,16 +27,17 @@
         $barcode_type = 'C128';
     }
 
-    // Generate barcode PNG — height 60 keeps bars short. Width multiplier scales down for long SKUs.
+    // Generate high-resolution barcode PNG. Larger w_mult = chunkier bars that survive scaling and scan reliably.
     $barcode_img = null;
     if (!empty($barcode_value)) {
         $len = strlen($barcode_value);
-        $w_mult = $len <= 12 ? 3 : ($len <= 18 ? 2 : ($len <= 26 ? 2 : 1));
+        // Always keep bars at least 2px in source; CSS scales down uniformly so bar-width ratios are preserved.
+        $w_mult = $len <= 12 ? 4 : ($len <= 20 ? 3 : 2);
         try {
-            $barcode_img = DNS1D::getBarcodePNG($barcode_value, $barcode_type, $w_mult, 60, [0, 0, 0], false);
+            $barcode_img = DNS1D::getBarcodePNG($barcode_value, $barcode_type, $w_mult, 80, [0, 0, 0], false);
         } catch (\Throwable $e) {
             try {
-                $barcode_img = DNS1D::getBarcodePNG($barcode_value, 'C128', $w_mult, 60, [0, 0, 0], false);
+                $barcode_img = DNS1D::getBarcodePNG($barcode_value, 'C128', $w_mult, 80, [0, 0, 0], false);
             } catch (\Throwable $e2) {
                 $barcode_img = null;
             }

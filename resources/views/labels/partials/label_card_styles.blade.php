@@ -92,12 +92,13 @@
 
     .label-card__code {
         display: flex;
-        flex: 0 0 auto;
+        flex: 1 1 0;
         width: 100%;
         flex-direction: column;
         align-items: center;
         justify-content: flex-start;
         min-width: 0;
+        min-height: 0;
     }
 
     /* Wrapper gets explicit px height from JS so the absolutely
@@ -119,14 +120,14 @@
         align-self: center;
     }
 
-    /* Barcode: image renders at natural aspect ratio (no fixed height = no empty padding). */
+    /* Barcode wrapper: fills remaining space below text so the card has no empty bottom area. */
     .label-card__img-wrap--barcode {
         width: 100%;
-        height: auto;
-        max-height: 0.55in;
-        flex: none;
+        flex: 1 1 auto;
+        min-height: 0.4in;
         align-self: center;
-        position: static;
+        position: relative;
+        overflow: hidden;
     }
 
     .label-card__qr-image {
@@ -136,14 +137,16 @@
         object-fit: fill;
     }
 
-    /* Barcode: render at natural size — width 100%, height auto preserves exact bar widths so it always scans. */
+    /* Barcode: fills wrapper preserving aspect; pixelated rendering keeps bar edges sharp = scannable. */
     .label-card__barcode-image {
-        position: static;
-        display: block;
-        width: 100%;
-        height: auto;
-        max-height: 0.55in;
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
         object-fit: contain;
+        image-rendering: -moz-crisp-edges;
+        image-rendering: -webkit-crisp-edges;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
     }
 
     .label-card__code-text {
