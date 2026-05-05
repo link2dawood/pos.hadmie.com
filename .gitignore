@@ -16,7 +16,6 @@ public_html/storage
 public_html/hot
 
 storage/*.key
-.env
 Homestead.yaml
 Homestead.json
 /.vagrant
@@ -25,7 +24,6 @@ Homestead.json
 /public/build
 /storage/pail
 .env.backup
-.env.production
 .phpactor.json
 auth.json
 # Ignore zip archives
@@ -37,7 +35,6 @@ auth.json
 /storage/*.key
 /storage/logs/*
 /storage/framework/*
-/.env
 
 # Optional: OS / editor junk
 .DS_Store
@@ -47,3 +44,4 @@ Thumbs.db
 error_log
 public/error_log
 *.log
+config.bat

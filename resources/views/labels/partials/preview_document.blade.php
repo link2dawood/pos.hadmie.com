@@ -194,7 +194,7 @@
 
         /* ── Label sheet (one page worth of stickers) ──────────────── */
         .label-sheet {
-            width: fit-content;
+            width: auto;
             max-width: calc(100vw - 48px);
             background: var(--paper);
             border-radius: 10px;
@@ -259,7 +259,7 @@
                 padding: 0 !important;
                 animation: none;
                 max-width: none !important;
-                width: fit-content !important;
+                width: auto !important;
                 margin: 0 !important;
                 overflow: hidden !important;
                 page-break-inside: avoid !important;
@@ -424,15 +424,17 @@
             document.title = 'labels';
 
             var promises = Array.from(sheets).map(function(sheet, index) {
-                return html2canvas(sheet, {
+                // Capture each label-card directly so the PNG hugs the content, not the wider sheet.
+                var cards = sheet.querySelectorAll('.label-card');
+                var captureTarget = cards.length === 1 ? cards[0] : sheet;
+
+                return html2canvas(captureTarget, {
                     scale: 3,
                     useCORS: true,
                     backgroundColor: '#ffffff',
                     imageTimeout: 0,
                     logging: false,
                     onclone: function(clonedDoc) {
-                        // Apply print-like styling so PNG matches what gets printed:
-                        // exact paper width, no padding/shadows/animations.
                         clonedDoc.querySelectorAll('.label-sheet').forEach(function(s) {
                             s.style.animation = 'none';
                             s.style.opacity = '1';
@@ -450,13 +452,8 @@
                         clonedDoc.querySelectorAll('.label-sheet__table').forEach(function(t) {
                             t.style.borderCollapse = 'collapse';
                             t.style.borderSpacing = '0';
-                            t.style.margin = '0 auto';
+                            t.style.margin = '0';
                             t.style.tableLayout = 'fixed';
-                        });
-                        // Force center each label-card inside its cell.
-                        clonedDoc.querySelectorAll('.label-card').forEach(function(card) {
-                            card.style.marginLeft = 'auto';
-                            card.style.marginRight = 'auto';
                         });
                     }
                 }).then(function(canvas) {
