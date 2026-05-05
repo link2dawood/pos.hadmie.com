@@ -194,7 +194,7 @@
 
         /* ── Label sheet (one page worth of stickers) ──────────────── */
         .label-sheet {
-            width: auto;
+            width: fit-content;
             max-width: calc(100vw - 48px);
             background: var(--paper);
             border-radius: 10px;
@@ -259,7 +259,7 @@
                 padding: 0 !important;
                 animation: none;
                 max-width: none !important;
-                width: auto !important;
+                width: fit-content !important;
                 margin: 0 !important;
                 overflow: hidden !important;
                 page-break-inside: avoid !important;
