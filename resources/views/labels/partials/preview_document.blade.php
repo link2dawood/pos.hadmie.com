@@ -450,7 +450,13 @@
                         clonedDoc.querySelectorAll('.label-sheet__table').forEach(function(t) {
                             t.style.borderCollapse = 'collapse';
                             t.style.borderSpacing = '0';
-                            t.style.margin = '0';
+                            t.style.margin = '0 auto';
+                            t.style.tableLayout = 'fixed';
+                        });
+                        // Force center each label-card inside its cell.
+                        clonedDoc.querySelectorAll('.label-card').forEach(function(card) {
+                            card.style.marginLeft = 'auto';
+                            card.style.marginRight = 'auto';
                         });
                     }
                 }).then(function(canvas) {

@@ -15,6 +15,8 @@
         align-items: stretch;
         justify-content: center;
         flex-shrink: 0;
+        margin-left: auto;
+        margin-right: auto;
     }
 
     .label-card__inner {
