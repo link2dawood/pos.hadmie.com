@@ -27,14 +27,16 @@
         $barcode_type = 'C128';
     }
 
-    // Generate barcode PNG — last param=true renders the number text inside the image (standard barcode style).
+    // Generate barcode PNG — height 60 keeps bars short. Width multiplier scales down for long SKUs.
     $barcode_img = null;
     if (!empty($barcode_value)) {
+        $len = strlen($barcode_value);
+        $w_mult = $len <= 12 ? 3 : ($len <= 18 ? 2 : ($len <= 26 ? 2 : 1));
         try {
-            $barcode_img = DNS1D::getBarcodePNG($barcode_value, $barcode_type, 4, 120, [0, 0, 0], false);
+            $barcode_img = DNS1D::getBarcodePNG($barcode_value, $barcode_type, $w_mult, 60, [0, 0, 0], false);
         } catch (\Throwable $e) {
             try {
-                $barcode_img = DNS1D::getBarcodePNG($barcode_value, 'C128', 4, 120, [0, 0, 0], false);
+                $barcode_img = DNS1D::getBarcodePNG($barcode_value, 'C128', $w_mult, 60, [0, 0, 0], false);
             } catch (\Throwable $e2) {
                 $barcode_img = null;
             }

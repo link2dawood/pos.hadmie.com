@@ -119,9 +119,11 @@
         align-self: center;
     }
 
-    /* Barcode: full width, centered. */
+    /* Barcode: short rectangle — fixed aspect so bars don't get tall and never distort horizontally. */
     .label-card__img-wrap--barcode {
         width: 100%;
+        aspect-ratio: 5 / 1;
+        flex: none;
         align-self: center;
     }
 
@@ -135,8 +137,8 @@
     /* QR: fill the square container. */
     .label-card__qr-image     { object-fit: fill; }
 
-    /* Barcode: fill removes the blank space top/bottom; bar widths scale uniformly so scanners still read correctly. */
-    .label-card__barcode-image { object-fit: fill; }
+    /* Barcode: contain preserves exact bar-width ratios — required for scanners. */
+    .label-card__barcode-image { object-fit: contain; }
 
     .label-card__code-text {
         margin-top: 1px;
