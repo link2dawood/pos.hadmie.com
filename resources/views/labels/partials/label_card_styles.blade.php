@@ -119,10 +119,11 @@
         align-self: center;
     }
 
-    /* Barcode: short rectangle — fixed aspect so bars don't get tall and never distort horizontally. */
+    /* Barcode: short fixed-height rectangle — never grows tall regardless of container. */
     .label-card__img-wrap--barcode {
         width: 100%;
-        aspect-ratio: 8 / 1;
+        height: 0.45in;
+        max-height: 0.45in;
         flex: none;
         align-self: center;
     }

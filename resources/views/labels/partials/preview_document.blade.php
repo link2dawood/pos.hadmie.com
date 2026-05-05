@@ -361,6 +361,9 @@
                 var wrap = code.querySelector('.label-card__img-wrap');
                 if (!wrap) return;
 
+                // Skip barcode wrapper — its height is fixed in CSS and must not grow.
+                if (wrap.classList.contains('label-card__img-wrap--barcode')) return;
+
                 var codeRect  = code.getBoundingClientRect();
                 var textEl    = code.querySelector('.label-card__code-text');
                 var textH     = textEl ? (textEl.getBoundingClientRect().height + 3) : 0;
