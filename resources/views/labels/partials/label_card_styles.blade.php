@@ -20,13 +20,14 @@
     .label-card__inner {
         width: 100%;
         height: 100%;
-        border: 2.5px solid var(--label-border);
-        border-radius: 10px;
+        border: none;
+        border-radius: 0;
         background: #ffffff;
         padding: 0.04in 0.06in 0.03in;
         display: flex;
         flex-direction: column;
         justify-content: center;
+        align-items: center;
         overflow: hidden;
         text-align: center;
     }
@@ -81,10 +82,11 @@
     /* ── Codes section (fills all remaining vertical space) ─────── */
     .label-card__codes {
         margin-top: 2px;
-        flex: 1 1 0;
+        flex: 0 1 auto;
         display: flex;
         flex-direction: column;
         align-items: center;
+        justify-content: center;
         gap: 2px;
         min-height: 0;
         overflow: hidden;
@@ -93,11 +95,11 @@
 
     .label-card__code {
         display: flex;
-        flex: 1 1 0;
+        flex: 0 1 auto;
         width: 100%;
         flex-direction: column;
         align-items: center;
-        justify-content: flex-start;
+        justify-content: center;
         min-width: 0;
         min-height: 0;
     }
@@ -112,11 +114,11 @@
         overflow: hidden;
     }
 
-    /* QR: square container — height drives flex, width matches via aspect-ratio. */
+    /* QR: explicit square — sizes itself without depending on parent flex-grow. */
     .label-card__img-wrap--qr {
-        flex: 1 1 0;
+        flex: none;
         aspect-ratio: 1 / 1;
-        width: unset;
+        width: 1in;
         max-width: 100%;
         align-self: center;
     }
