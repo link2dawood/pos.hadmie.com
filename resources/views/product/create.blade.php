@@ -33,8 +33,12 @@
         <div class="col-sm-4">
             <div class="form-group">
                 {!! Form::label('sku', __('product.sku') . ':') !!} @show_tooltip(__('tooltip.sku'))
-                {!! Form::text('sku', null, ['class' => 'form-control',
-                'placeholder' => __('product.sku')]); !!}
+                <div class="input-group">
+                    {!! Form::text('sku', null, ['class' => 'form-control', 'id' => 'sku', 'placeholder' => __('product.sku')]); !!}
+                    <span class="input-group-btn">
+                        <button type="button" class="btn btn-default bg-white btn-flat js-camera-scan-btn" data-input-target="#sku" title="Scan with camera"><i class="fa fa-camera text-primary fa-lg"></i></button>
+                    </span>
+                </div>
             </div>
         </div>
         <div class="col-sm-4">
@@ -51,6 +55,7 @@
                 <div class="input-group">
                     {!! Form::text('barcode', !empty($duplicate_product->barcode) ? $duplicate_product->barcode : null, ['class' => 'form-control', 'id' => 'barcode', 'placeholder' => 'Scan or enter barcode']); !!}
                     <span class="input-group-btn">
+                        <button type="button" class="btn btn-default bg-white btn-flat js-camera-scan-btn" data-input-target="#barcode" title="Scan with camera"><i class="fa fa-camera text-primary fa-lg"></i></button>
                         <button type="button" class="btn btn-default js-generate-product-code" data-action="barcode">Generate</button>
                     </span>
                 </div>
@@ -63,6 +68,7 @@
                 <div class="input-group">
                     {!! Form::text('qr_code_value', !empty($duplicate_product->qr_code_value) ? $duplicate_product->qr_code_value : null, ['class' => 'form-control', 'id' => 'qr_code_value', 'placeholder' => 'Scan or enter QR value']); !!}
                     <span class="input-group-btn">
+                        <button type="button" class="btn btn-default bg-white btn-flat js-camera-scan-btn" data-input-target="#qr_code_value" title="Scan with camera"><i class="fa fa-camera text-primary fa-lg"></i></button>
                         <button type="button" class="btn btn-default js-generate-product-code" data-action="qr">Generate</button>
                     </span>
                 </div>
@@ -412,11 +418,15 @@
 </section>
 <!-- /.content -->
 
+@include('product.partials.camera_scan_modal')
+
 @endsection
 
 @section('javascript')
 
 <script src="{{ asset('js/product.js?v=' . $asset_v) }}"></script>
+<script src="{{ asset('js/html5-qrcode.min.js?v=' . $asset_v) }}"></script>
+<script src="{{ asset('js/product_scanner.js?v=' . $asset_v) }}"></script>
 
 <script type="text/javascript">
     $(document).ready(function() {
