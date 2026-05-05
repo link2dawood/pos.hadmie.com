@@ -82,7 +82,7 @@
     /* ── Codes section (fills all remaining vertical space) ─────── */
     .label-card__codes {
         margin-top: 2px;
-        flex: 0 1 auto;
+        flex: 1 1 0;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -95,7 +95,7 @@
 
     .label-card__code {
         display: flex;
-        flex: 0 1 auto;
+        flex: 1 1 0;
         width: 100%;
         flex-direction: column;
         align-items: center;
@@ -114,23 +114,24 @@
         overflow: hidden;
     }
 
-    /* QR: explicit square — sizes itself without depending on parent flex-grow. */
+    /* QR: square — height drives flex, width matches via aspect-ratio so it never overflows. */
     .label-card__img-wrap--qr {
-        flex: none;
+        flex: 1 1 0;
         aspect-ratio: 1 / 1;
-        width: 1in;
+        width: unset;
         max-width: 100%;
+        max-height: 100%;
         align-self: center;
     }
 
-    /* Barcode: image renders at natural aspect ratio (no fixed height = no empty padding). */
+    /* Barcode wrapper: fills available space; image inside scales preserving bar widths. */
     .label-card__img-wrap--barcode {
         width: 100%;
-        height: auto;
-        max-height: 0.55in;
-        flex: none;
+        flex: 1 1 0;
+        min-height: 0;
         align-self: center;
-        position: static;
+        position: relative;
+        overflow: hidden;
     }
 
     .label-card__qr-image {
@@ -140,13 +141,11 @@
         object-fit: fill;
     }
 
-    /* Barcode: render at natural size — width 100%, height auto preserves exact bar widths so it always scans. */
+    /* Barcode: fills wrapper preserving bar-width ratios — scannable. */
     .label-card__barcode-image {
-        position: static;
-        display: block;
-        width: 100%;
-        height: auto;
-        max-height: 0.55in;
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
         object-fit: contain;
     }
 
