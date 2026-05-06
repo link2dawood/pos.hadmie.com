@@ -1597,18 +1597,54 @@ class ProductController extends Controller
             $qr_code_value = $barcode ?: $sku;
         }
 
+        // Live preview: when fields are empty, fall back to the SKU so the
+        // user sees a barcode + QR as soon as they type/scan the SKU.
+        if ($action === 'preview') {
+            if (empty($barcode) && $sku !== '') {
+                $barcode = $sku;
+            }
+            if (empty($qr_code_value) && $sku !== '') {
+                $qr_code_value = $sku;
+            }
+        }
+
+        // If the chosen barcode type is digit-only but the value isn't, fall back to C128 so generation never throws.
+        $digit_only_types = ['EAN8', 'EAN13', 'UPCA', 'UPCE', 'I25', 'I25+', 'S25', 'S25+', 'MSI', 'MSI+', 'POSTNET', 'PLANET', 'CODE11'];
+        $effective_type = $barcode_type;
+        if (! empty($barcode) && in_array($effective_type, $digit_only_types) && ! ctype_digit($barcode)) {
+            $effective_type = 'C128';
+        }
+
+        $barcode_preview = null;
+        if (! empty($barcode)) {
+            try {
+                $barcode_preview = 'data:image/png;base64,'.\DNS1D::getBarcodePNG($barcode, $effective_type, 4, 120, [0, 0, 0], true);
+            } catch (\Throwable $e) {
+                try {
+                    $barcode_preview = 'data:image/png;base64,'.\DNS1D::getBarcodePNG($barcode, 'C128', 4, 120, [0, 0, 0], true);
+                } catch (\Throwable $e2) {
+                    $barcode_preview = null;
+                }
+            }
+        }
+
+        $qr_preview = null;
+        if (! empty($qr_code_value)) {
+            try {
+                $qr_preview = 'data:image/png;base64,'.\DNS2D::getBarcodePNG($qr_code_value, 'QRCODE,M', 12, 12, [0, 0, 0]);
+            } catch (\Throwable $e) {
+                $qr_preview = null;
+            }
+        }
+
         return response()->json([
             'success' => true,
             'sku' => $sku,
             'barcode_type' => $barcode_type,
             'barcode' => $barcode,
             'qr_code_value' => $qr_code_value,
-            'barcode_preview' => ! empty($barcode)
-                ? 'data:image/png;base64,'.\DNS1D::getBarcodePNG($barcode, $barcode_type, 2, 60, [17, 24, 39], true)
-                : null,
-            'qr_preview' => ! empty($qr_code_value)
-                ? 'data:image/png;base64,'.\DNS2D::getBarcodePNG($qr_code_value, 'QRCODE', 6, 6, [17, 24, 39])
-                : null,
+            'barcode_preview' => $barcode_preview,
+            'qr_preview' => $qr_preview,
         ]);
     }
 
