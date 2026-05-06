@@ -13,15 +13,10 @@
 
     function supportedFormats() {
         if (typeof Html5QrcodeSupportedFormats === 'undefined') return [];
+        // Restricted to the formats our app actually generates — fewer formats = faster decoding.
         return [
             Html5QrcodeSupportedFormats.QR_CODE,
             Html5QrcodeSupportedFormats.CODE_128,
-            Html5QrcodeSupportedFormats.CODE_39,
-            Html5QrcodeSupportedFormats.EAN_13,
-            Html5QrcodeSupportedFormats.EAN_8,
-            Html5QrcodeSupportedFormats.UPC_A,
-            Html5QrcodeSupportedFormats.UPC_E,
-            Html5QrcodeSupportedFormats.ITF,
         ];
     }
 
@@ -48,7 +43,14 @@
 
         status('Requesting camera permission...', 'info');
         html5QrCode = new Html5Qrcode('product_camera_reader');
-        var config = { fps: 10, qrbox: { width: 220, height: 220 } };
+        var config = {
+            fps: 20,
+            qrbox: { width: 220, height: 220 },
+            videoConstraints: {
+                facingMode: 'environment',
+                advanced: [{ focusMode: 'continuous' }]
+            }
+        };
         var formats = supportedFormats();
         if (formats.length) config.formatsToSupport = formats;
 

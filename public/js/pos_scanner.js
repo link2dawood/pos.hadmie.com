@@ -184,15 +184,10 @@
                 return [];
             }
 
+            // Restricted to the formats our app actually generates — fewer formats = faster decoding.
             return [
                 Html5QrcodeSupportedFormats.QR_CODE,
                 Html5QrcodeSupportedFormats.CODE_128,
-                Html5QrcodeSupportedFormats.CODE_39,
-                Html5QrcodeSupportedFormats.EAN_13,
-                Html5QrcodeSupportedFormats.EAN_8,
-                Html5QrcodeSupportedFormats.UPC_A,
-                Html5QrcodeSupportedFormats.UPC_E,
-                Html5QrcodeSupportedFormats.ITF,
             ];
         }
 
@@ -210,8 +205,12 @@
             scannerStatus('Requesting camera permission...', 'info');
             html5QrCode = new Html5Qrcode('pos_camera_reader');
             var cameraConfig = {
-                fps: 10,
+                fps: 20,
                 qrbox: { width: 220, height: 220 },
+                videoConstraints: {
+                    facingMode: 'environment',
+                    advanced: [{ focusMode: 'continuous' }]
+                },
             };
             var formats = supportedCameraFormats();
 
