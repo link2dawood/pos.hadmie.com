@@ -70,7 +70,30 @@
                         }
                     }
                     stopScan().then(function() {
-                        $('#product_camera_scan_modal').modal('hide');
+                        var $modal = $('#product_camera_scan_modal');
+                        var scrollAfterHide = function() {
+                            if (!targetSelector) return;
+                            var $input = $(targetSelector);
+                            if (!$input.length) return;
+                            // The scanner can be invoked from the page itself OR from inside
+                            // another modal (e.g. POS quick-add product). In the modal case,
+                            // animating html/body does nothing — the modal-body is the scroll
+                            // container. Find the nearest scrollable ancestor and animate that.
+                            var $scroller = $input.closest('.modal-body, .modal-dialog');
+                            if (!$scroller.length || $scroller.css('overflow-y') === 'visible') {
+                                $scroller = $('html, body');
+                            }
+                            var inputTop = $input.offset().top;
+                            var scrollerTop = $scroller.is('html, body') ? 0 : $scroller.offset().top;
+                            var currentScroll = $scroller.is('html, body')
+                                ? ($(window).scrollTop())
+                                : $scroller.scrollTop();
+                            var target = currentScroll + (inputTop - scrollerTop) - 80;
+                            $scroller.animate({ scrollTop: target < 0 ? 0 : target }, 300);
+                            try { $input.focus(); } catch (e) {}
+                        };
+                        $modal.one('hidden.bs.modal', scrollAfterHide);
+                        $modal.modal('hide');
                     });
                 }
             )
