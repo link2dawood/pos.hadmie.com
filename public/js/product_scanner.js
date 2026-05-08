@@ -79,18 +79,44 @@
                             // another modal (e.g. POS quick-add product). In the modal case,
                             // animating html/body does nothing — the modal-body is the scroll
                             // container. Find the nearest scrollable ancestor and animate that.
-                            var $scroller = $input.closest('.modal-body, .modal-dialog');
-                            if (!$scroller.length || $scroller.css('overflow-y') === 'visible') {
+                            // Walk up to find the actual scrollable ancestor. Bootstrap 3
+                            // scrolls the whole .modal on mobile (modal-body has no
+                            // overflow), and .modal-body on desktop only when sized. Pick
+                            // whichever ancestor is actually scrollable.
+                            var $scroller = null;
+                            $input.parents().each(function() {
+                                var $p = $(this);
+                                var oy = $p.css('overflow-y');
+                                if ((oy === 'auto' || oy === 'scroll') && this.scrollHeight > this.clientHeight) {
+                                    $scroller = $p;
+                                    return false;
+                                }
+                            });
+                            if (!$scroller) {
+                                $scroller = $input.closest('.modal');
+                            }
+                            if (!$scroller || !$scroller.length) {
                                 $scroller = $('html, body');
                             }
+                            var isWindow = $scroller.is('html, body');
                             var inputTop = $input.offset().top;
-                            var scrollerTop = $scroller.is('html, body') ? 0 : $scroller.offset().top;
-                            var currentScroll = $scroller.is('html, body')
-                                ? ($(window).scrollTop())
-                                : $scroller.scrollTop();
+                            var scrollerTop = isWindow ? 0 : $scroller.offset().top;
+                            var currentScroll = isWindow ? $(window).scrollTop() : $scroller.scrollTop();
                             var target = currentScroll + (inputTop - scrollerTop) - 80;
-                            $scroller.animate({ scrollTop: target < 0 ? 0 : target }, 300);
-                            try { $input.focus(); } catch (e) {}
+                            if (target < 0) target = 0;
+                            // Animate first; some mobile browsers ignore animate on a
+                            // .modal element, so also set scrollTop directly as a fallback.
+                            $scroller.stop(true).animate({ scrollTop: target }, 300);
+                            setTimeout(function() {
+                                if (isWindow) {
+                                    window.scrollTo(0, target);
+                                } else {
+                                    $scroller[0].scrollTop = target;
+                                }
+                            }, 320);
+                            try { $input.focus({ preventScroll: true }); } catch (e) {
+                                try { $input.focus(); } catch (e2) {}
+                            }
                         };
                         $modal.one('hidden.bs.modal', scrollAfterHide);
                         $modal.modal('hide');
