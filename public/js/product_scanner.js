@@ -140,5 +140,26 @@
         stopScan().then(function() {
             status('Waiting for camera permission.', 'info');
         });
+
+        // Bootstrap 3 nested-modal bug: when a nested modal hides, BS3 strips
+        // the `modal-open` class from <body> and removes the leftover backdrop,
+        // which on mobile leaves the still-open parent modal un-scrollable
+        // (body keeps its position:fixed-style state). Restore the parent
+        // modal's scroll state if any other modal is still visible.
+        setTimeout(function() {
+            var $openModals = $('.modal.in:visible').not('#product_camera_scan_modal');
+            if ($openModals.length) {
+                $('body').addClass('modal-open');
+                if (!$('.modal-backdrop').length) {
+                    $('<div class="modal-backdrop fade in"></div>').appendTo(document.body);
+                }
+                // Re-enable touch scrolling on the parent modal explicitly —
+                // some mobile browsers cache the prior overflow state.
+                $openModals.css({
+                    'overflow-y': 'auto',
+                    '-webkit-overflow-scrolling': 'touch'
+                });
+            }
+        }, 50);
     });
 })(window, document, jQuery);
